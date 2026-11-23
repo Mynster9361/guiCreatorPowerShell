@@ -116,6 +116,18 @@ The **Examples** menu opens eight of [GliderUI's examples](https://github.com/md
 
 The original scripts build their windows in code. In these versions the layout is in the designer and the logic is in the Script tab. They are ported under GliderUI's MIT license (Copyright (c) 2026 mdgrs-mei).
 
+### Exchange Online Access Control (complete tool)
+
+**Examples, then Exchange Online Access Control** is a complete, real-world tool. It's a rebuild of the WinForms script [Set calendar and mailbox permissions](https://github.com/Mynster9361/PowerShell/tree/main/GUI/Set%20calendar%20and%20mailbox%20permissions). It checks, gives and removes **Full Access** (with optional auto-mapping), **Send As**, **Send On Behalf** and **calendar** permissions on Exchange Online mailboxes.
+
+- A **Connect** button and status line. If the ExchangeOnlineManagement module is missing, the tool offers to install it for the current user.
+- Before and after permission tables, plus the exact commands that ran, appear in a **Results** panel. **Save...** writes them to a text file.
+- A **confirmation dialog** (a second form, `formConfirm`) appears before any change is made.
+- Input validation, buttons that are disabled while Exchange is working, a resizable window, and an automatic disconnect when the window closes.
+- Cmdlets are called with splatted parameters, so text typed into the boxes is never run as code. Send On Behalf adds or removes a single delegate instead of replacing the whole list.
+
+A ready-to-run export is in [examples/ExchangeOnlineAccessControl.ps1](examples/ExchangeOnlineAccessControl.ps1). Run it with `pwsh -File`, or open it in GUI Creator to edit the design.
+
 GliderUI's other examples are not included because the designer can't represent them:
 
 - DrawerPage (navigation pages)

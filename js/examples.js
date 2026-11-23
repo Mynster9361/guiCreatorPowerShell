@@ -580,5 +580,330 @@ $buttonCancel_Click = {
         return multi(wizard, advanced);
       },
     },
+
+    // ------------------------------------------------------------------ Exchange Online access control (real-world tool)
+    {
+      name: 'Exchange Online Access Control',
+      file: 'ExchangeOnlineAccessRights',
+      tag: 'Real-world',
+      description: 'Check, give and remove Full Access, Send As, Send On Behalf and calendar permissions on Exchange Online mailboxes. Rebuilt from a WinForms tool.',
+      build: () => {
+        nid = 1;
+        const RIGHTS = 'Reviewer\nEditor\nOwner\nAvailabilityOnly\nLimitedDetails\nAuthor\nContributor\nNonEditingAuthor\nPublishingEditor\nPublishingAuthor\nNone';
+        const main = project('formExchangeAccess', { Title: 'Exchange Online Access Control', Width: 780, Height: 600, MinWidth: 700, MinHeight: 520 }, [
+          ctl('TextBlock', 'labelTitle', 20, 16, 420, 32, { Text: 'Exchange Online Access Control', FontSize: 22, FontWeight: 'SemiBold' }),
+          ctl('TextBlock', 'labelConnection', 20, 54, 560, 20, { Text: 'Not connected to Exchange Online', Anchor: 'Top, Left, Right' }),
+          ctl('Button', 'buttonConnect', 640, 20, 120, 32, { Content: 'Connect', Classes: 'accent', Anchor: 'Top, Right' }, { events: { Click: 'buttonConnect_Click' } }),
+          ctl('GroupBox', 'groupWho', 20, 84, 360, 200, { Header: 'Mailbox and person' }, {
+            children: [
+              ctl('TextBlock', 'labelMailbox', 0, 0, 330, 20, { Text: 'Mailbox whose permissions you change' }),
+              ctl('TextBox', 'textboxMailbox', 0, 24, 330, 32, { Watermark: 'shared.mailbox@contoso.com' }),
+              ctl('TextBlock', 'labelUser', 0, 72, 330, 20, { Text: 'Person to give or remove access for' }),
+              ctl('TextBox', 'textboxUser', 0, 96, 330, 32, { Watermark: 'jane.doe@contoso.com' }),
+            ],
+          }),
+          ctl('GroupBox', 'groupPermissions', 400, 84, 360, 200, { Header: 'Permissions', Anchor: 'Top, Left, Right' }, {
+            children: [
+              ctl('CheckBox', 'checkboxFullAccess', 0, 0, 150, 32, { Content: 'Full Access' }),
+              ctl('CheckBox', 'checkboxAutoMap', 160, 0, 180, 32, { Content: 'Auto-map in Outlook', IsChecked: true }),
+              ctl('CheckBox', 'checkboxSendAs', 0, 36, 150, 32, { Content: 'Send As' }),
+              ctl('CheckBox', 'checkboxSendOnBehalf', 0, 72, 200, 32, { Content: 'Send On Behalf' }),
+              ctl('CheckBox', 'checkboxCalendar', 0, 108, 140, 32, { Content: 'Calendar:' }),
+              ctl('ComboBox', 'comboboxCalendarRights', 144, 108, 196, 32, { Items: RIGHTS, SelectedIndex: 0, Anchor: 'Top, Left, Right' }),
+            ],
+          }),
+          ctl('Button', 'buttonCheck', 20, 296, 130, 32, { Content: 'Check Access', IsDefault: true }, { events: { Click: 'buttonCheck_Click' } }),
+          ctl('Button', 'buttonGive', 158, 296, 130, 32, { Content: 'Give Access', Classes: 'accent' }, { events: { Click: 'buttonGive_Click' } }),
+          ctl('Button', 'buttonRemove', 296, 296, 130, 32, { Content: 'Remove Access' }, { events: { Click: 'buttonRemove_Click' } }),
+          ctl('HyperlinkButton', 'linkPermissionHelp', 520, 296, 240, 32, {
+            Content: 'About calendar permission levels',
+            NavigateUri: 'https://learn.microsoft.com/powershell/module/exchange/add-mailboxfolderpermission#-accessrights',
+            Anchor: 'Top, Right',
+          }),
+          ctl('TextBlock', 'labelResults', 20, 344, 200, 20, { Text: 'Results', FontWeight: 'SemiBold' }),
+          ctl('Button', 'buttonSaveReport', 568, 338, 96, 28, { Content: 'Save...', Anchor: 'Top, Right' }, { events: { Click: 'buttonSaveReport_Click' } }),
+          ctl('Button', 'buttonClear', 672, 338, 88, 28, { Content: 'Clear', Anchor: 'Top, Right' }, { events: { Click: 'buttonClear_Click' } }),
+          ctl('TextBox', 'textboxResults', 20, 372, 740, 164, {
+            IsReadOnly: true, AcceptsReturn: true, FontFamily: 'Cascadia Mono, Consolas, monospace', FontSize: 12,
+            Watermark: 'Check, give or remove access to see the permissions and the commands that were used.',
+            Anchor: 'Top, Bottom, Left, Right',
+          }),
+          ctl('TextBlock', 'labelStatus', 20, 554, 600, 20, { Text: 'Ready', Anchor: 'Bottom, Left, Right' }),
+          ctl('Button', 'buttonExit', 680, 548, 80, 32, { Content: 'Exit', Anchor: 'Bottom, Right' }, { events: { Click: 'buttonExit_Click' } }),
+        ], String.raw`# Exchange Online Access Control
+# Rebuilt for GliderUI from https://github.com/Mynster9361/PowerShell/tree/main/GUI/Set%20calendar%20and%20mailbox%20permissions
+# Requires the ExchangeOnlineManagement module (v3); the Connect button offers to install it.
+
+$nl = [Environment]::NewLine
+$script:calendarRights = @('Reviewer', 'Editor', 'Owner', 'AvailabilityOnly', 'LimitedDetails', 'Author', 'Contributor',
+    'NonEditingAuthor', 'PublishingEditor', 'PublishingAuthor', 'None')
+$script:busyControls = @($buttonConnect, $buttonCheck, $buttonGive, $buttonRemove)
+
+#region Helpers
+function Set-Status([string]$Text, [ValidateSet('Info', 'Ok', 'Error')][string]$Kind = 'Info') {
+    $labelStatus.Text = $Text
+    $color = switch ($Kind) { 'Ok' { [Colors]::SeaGreen } 'Error' { [Colors]::IndianRed } default { [Colors]::Gray } }
+    $labelStatus.Foreground = [SolidColorBrush]::new($color, 1)
+}
+
+function Get-CleanText([string]$Text) { ($Text -replace '\s+', ' ').Trim() }
+
+function Test-ExoConnection {
+    if (-not (Get-Command Get-ConnectionInformation -ErrorAction SilentlyContinue)) { return $false }
+    [bool](Get-ConnectionInformation -ErrorAction SilentlyContinue | Where-Object State -EQ 'Connected')
+}
+
+function Update-ConnectionStatus {
+    $info = if (Test-ExoConnection) { Get-ConnectionInformation | Where-Object State -EQ 'Connected' | Select-Object -First 1 }
+    if ($info) {
+        $labelConnection.Text = 'Connected as {0} (tenant {1})' -f $info.UserPrincipalName, $info.TenantID
+        $buttonConnect.Content = 'Reconnect'
+    } else {
+        $labelConnection.Text = 'Not connected to Exchange Online'
+        $buttonConnect.Content = 'Connect'
+    }
+}
+
+# Reads and validates the two text boxes.
+function Get-Input([switch]$NeedUser) {
+    $mailbox = Get-CleanText $textboxMailbox.Text
+    $user = Get-CleanText $textboxUser.Text
+    if (-not $mailbox) { throw 'Enter the mailbox first.' }
+    if ($NeedUser -and -not $user) { throw 'Enter the person who should get or lose access.' }
+    if (-not (Test-ExoConnection)) { throw 'Not connected to Exchange Online. Click Connect first.' }
+    [pscustomobject]@{ Mailbox = $mailbox; User = $user }
+}
+
+# "mailbox:\Calendar" - the folder name depends on the mailbox language, so look it up.
+function Get-CalendarIdentity([string]$Mailbox) {
+    $folder = Get-EXOMailboxFolderStatistics -Identity $Mailbox -FolderScope Calendar -ErrorAction Stop |
+        Where-Object FolderType -EQ 'Calendar' | Select-Object -First 1
+    if (-not $folder) { throw "No calendar folder found for $Mailbox." }
+    '{0}:\{1}' -f $Mailbox, $folder.Name
+}
+
+function Format-Section([string]$Title, $Rows) {
+    $body = if ($Rows) { ($Rows | Format-Table -AutoSize | Out-String -Width 200).Trim() } else { '(none)' }
+    $Title + $nl + $body + $nl
+}
+
+function Get-AccessReport([string]$Mailbox) {
+    $calendar = Get-CalendarIdentity $Mailbox
+    $sendOnBehalf = (Get-EXOMailbox -Identity $Mailbox -Properties GrantSendOnBehalfTo -ErrorAction Stop).GrantSendOnBehalfTo |
+        ForEach-Object { [pscustomobject]@{ User = $_ } }
+    @(
+        Format-Section 'Full Access:' (Get-EXOMailboxPermission -Identity $Mailbox -ErrorAction Stop |
+                Where-Object User -NE 'NT AUTHORITY\SELF' | Select-Object User, AccessRights)
+        Format-Section 'Send As:' (Get-EXORecipientPermission -Identity $Mailbox -ErrorAction Stop |
+                Where-Object Trustee -NE 'NT AUTHORITY\SELF' | Select-Object Trustee, AccessRights)
+        Format-Section 'Send On Behalf:' $sendOnBehalf
+        Format-Section "Calendar ($calendar):" (Get-EXOMailboxFolderPermission -Identity $calendar -ErrorAction Stop | Select-Object User, AccessRights)
+    ) -join $nl
+}
+
+# Runs an Exchange cmdlet with splatted parameters (user input is never run as code)
+# and records a readable version of the command for the report.
+function Invoke-Logged([string]$Command, [hashtable]$Parameters) {
+    $shown = foreach ($p in $Parameters.GetEnumerator() | Sort-Object Key) {
+        $v = $p.Value
+        if ($v -is [bool]) { ('-{0}:' -f $p.Key) + '$' + "$v".ToLower() }
+        elseif ($v -is [hashtable]) { '-{0} @{{{1}}}' -f $p.Key, (($v.GetEnumerator() | ForEach-Object { "$($_.Key)='$($_.Value)'" }) -join '; ') }
+        else { "-{0} '{1}'" -f $p.Key, ("$v" -replace "'", "''") }
+    }
+    $script:commandsRun.Add(($Command + ' ' + ($shown -join ' ')))
+    & $Command @Parameters -ErrorAction Stop
+}
+
+function Show-Report([string]$Heading, [string[]]$Parts) {
+    $textboxResults.Text = (@("=== $Heading  ($(Get-Date -Format 'yyyy-MM-dd HH:mm')) ===", '') + $Parts) -join $nl
+}
+#endregion
+
+#region Actions
+function Invoke-AccessChange([ValidateSet('Give', 'Remove')][string]$Mode) {
+    $script:commandsRun = [System.Collections.Generic.List[string]]::new()
+    try {
+        $in = Get-Input -NeedUser
+        $m = $in.Mailbox
+        $u = $in.User
+        $wanted = @(
+            if ($checkboxFullAccess.IsChecked) { 'Full Access' }
+            if ($checkboxSendAs.IsChecked) { 'Send As' }
+            if ($checkboxSendOnBehalf.IsChecked) { 'Send On Behalf' }
+            if ($checkboxCalendar.IsChecked) { 'Calendar' }
+        )
+        if (-not $wanted) { throw 'Tick at least one permission (Full Access, Send As, Send On Behalf or Calendar).' }
+        $rights = $script:calendarRights[[Math]::Max(0, [int]$comboboxCalendarRights.SelectedIndex)]
+
+        $what = $wanted -join ', '
+        if ($Mode -eq 'Remove') {
+            $question = "Remove $what for $u on $($m)?"
+        } else {
+            $question = "Give $u $what on $($m)?"
+            if ($checkboxCalendar.IsChecked) { $question += "$($nl)Calendar permission: $rights" }
+        }
+        $answer = Show-formConfirm -Owner $formExchangeAccess -Values @{ labelMessage = $question }
+        if ($answer.DialogResult -ne 'OK') { return Set-Status 'Cancelled.' }
+
+        Set-Status "$Mode access: working..."
+        $before = Get-AccessReport $m
+        $calendar = if ($checkboxCalendar.IsChecked) { Get-CalendarIdentity $m }
+
+        if ($Mode -eq 'Give') {
+            if ($checkboxFullAccess.IsChecked) {
+                Invoke-Logged 'Add-MailboxPermission' @{ Identity = $m; User = $u; AccessRights = 'FullAccess'; InheritanceType = 'All'; AutoMapping = [bool]$checkboxAutoMap.IsChecked; Confirm = $false } | Out-Null
+            }
+            if ($checkboxSendAs.IsChecked) {
+                Invoke-Logged 'Add-RecipientPermission' @{ Identity = $m; Trustee = $u; AccessRights = 'SendAs'; Confirm = $false } | Out-Null
+            }
+            if ($checkboxSendOnBehalf.IsChecked) {
+                Invoke-Logged 'Set-Mailbox' @{ Identity = $m; GrantSendOnBehalfTo = @{ Add = $u }; Confirm = $false } | Out-Null
+            }
+            if ($checkboxCalendar.IsChecked) {
+                $existing = Get-EXOMailboxFolderPermission -Identity $calendar -User $u -ErrorAction SilentlyContinue
+                $cmd = if ($existing) { 'Set-MailboxFolderPermission' } else { 'Add-MailboxFolderPermission' }
+                Invoke-Logged $cmd @{ Identity = $calendar; User = $u; AccessRights = $rights; Confirm = $false } | Out-Null
+            }
+        } else {
+            if ($checkboxFullAccess.IsChecked) {
+                Invoke-Logged 'Remove-MailboxPermission' @{ Identity = $m; User = $u; AccessRights = 'FullAccess'; InheritanceType = 'All'; Confirm = $false } | Out-Null
+            }
+            if ($checkboxSendAs.IsChecked) {
+                Invoke-Logged 'Remove-RecipientPermission' @{ Identity = $m; Trustee = $u; AccessRights = 'SendAs'; Confirm = $false } | Out-Null
+            }
+            if ($checkboxSendOnBehalf.IsChecked) {
+                Invoke-Logged 'Set-Mailbox' @{ Identity = $m; GrantSendOnBehalfTo = @{ Remove = $u }; Confirm = $false } | Out-Null
+            }
+            if ($checkboxCalendar.IsChecked) {
+                Invoke-Logged 'Remove-MailboxFolderPermission' @{ Identity = $calendar; User = $u; Confirm = $false } | Out-Null
+            }
+        }
+
+        Show-Report "$Mode access: $u on $m" (@(
+                'PERMISSIONS NOW', '---------------', (Get-AccessReport $m),
+                'BEFORE THE CHANGE', '-----------------', $before,
+                'COMMANDS USED', '-------------', 'Connect-ExchangeOnline') + $script:commandsRun)
+        Set-Status "$Mode access: done ($what)." 'Ok'
+    } catch {
+        Set-Status $_.Exception.Message 'Error'
+        if ($script:commandsRun.Count) {
+            Show-Report "$Mode access FAILED" (@('Error: ' + $_.Exception.Message, '', 'Commands that ran before the error:') + $script:commandsRun)
+        }
+    }
+}
+#endregion
+
+#region Event handlers
+$buttonConnect_Click = [EventCallback]@{
+    DisabledControlsWhileProcessing = $script:busyControls
+    ScriptBlock = {
+        param ($argumentList, $s, $e)
+        try {
+            if (-not (Get-Command Connect-ExchangeOnline -ErrorAction SilentlyContinue)) {
+                if (-not (Get-Module -ListAvailable ExchangeOnlineManagement)) {
+                    $answer = Show-formConfirm -Owner $formExchangeAccess -Values @{
+                        labelMessage = "The ExchangeOnlineManagement module is not installed.$($nl)$($nl)Install it for your user account now?$($nl)(Install-Module ExchangeOnlineManagement -Scope CurrentUser)"
+                    }
+                    if ($answer.DialogResult -ne 'OK') { return Set-Status 'ExchangeOnlineManagement is required to continue.' 'Error' }
+                    Set-Status 'Installing ExchangeOnlineManagement...'
+                    Install-Module ExchangeOnlineManagement -Scope CurrentUser -Force -ErrorAction Stop
+                }
+                Import-Module ExchangeOnlineManagement -ErrorAction Stop
+            }
+            Set-Status 'Connecting... sign in with the window that opens.'
+            Connect-ExchangeOnline -ShowBanner:$false -ErrorAction Stop
+            Update-ConnectionStatus
+            Set-Status 'Connected.' 'Ok'
+        } catch {
+            Update-ConnectionStatus
+            Set-Status ('Connect failed: ' + $_.Exception.Message) 'Error'
+        }
+    }
+}
+
+$buttonCheck_Click = [EventCallback]@{
+    DisabledControlsWhileProcessing = $script:busyControls
+    ScriptBlock = {
+        param ($argumentList, $s, $e)
+        try {
+            $in = Get-Input
+            Set-Status "Reading permissions of $($in.Mailbox)..."
+            Show-Report "Access on $($in.Mailbox)" @(Get-AccessReport $in.Mailbox)
+            Set-Status 'Permissions loaded.' 'Ok'
+        } catch {
+            Set-Status $_.Exception.Message 'Error'
+        }
+    }
+}
+
+$buttonGive_Click = [EventCallback]@{
+    DisabledControlsWhileProcessing = $script:busyControls
+    ScriptBlock = { param ($argumentList, $s, $e) Invoke-AccessChange -Mode Give }
+}
+
+$buttonRemove_Click = [EventCallback]@{
+    DisabledControlsWhileProcessing = $script:busyControls
+    ScriptBlock = { param ($argumentList, $s, $e) Invoke-AccessChange -Mode Remove }
+}
+
+$buttonSaveReport_Click = {
+    param ($argumentList, $s, $e)
+    if (-not $textboxResults.Text) { return Set-Status 'Nothing to save yet.' 'Error' }
+    $options = [GliderUI.Avalonia.Platform.Storage.FilePickerSaveOptions]::new()
+    $options.Title = 'Save report'
+    $options.SuggestedFileName = 'AccessRights {0}' -f (Get-Date -Format 'yyyy-MM-dd HHmm')
+    $options.DefaultExtension = '.txt'
+    $file = $formExchangeAccess.StorageProvider.SaveFilePickerAsync($options).WaitForCompleted()
+    if ($file) {
+        Set-Content -LiteralPath $file.Path.LocalPath -Value $textboxResults.Text -Encoding utf8
+        Set-Status "Report saved to $($file.Path.LocalPath)" 'Ok'
+    }
+}
+
+$buttonClear_Click = {
+    param ($argumentList, $s, $e)
+    $textboxResults.Text = ''
+    Set-Status 'Ready'
+}
+
+$buttonExit_Click = {
+    param ($argumentList, $s, $e)
+    $formExchangeAccess.Close()
+}
+
+# Disconnect when the window closes (also when it is closed with X).
+$formExchangeAccess_Closed = {
+    param ($argumentList, $s, $e)
+    if (Test-ExoConnection) { Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue }
+}
+
+$formExchangeAccess_Opened = {
+    param ($argumentList, $s, $e)
+    Update-ConnectionStatus
+}
+#endregion
+`, { Closed: 'formExchangeAccess_Closed', Opened: 'formExchangeAccess_Opened' });
+
+        const confirm = project('formConfirm', { Title: 'Please confirm', Width: 440, Height: 210, CanResize: false, CanMinimize: false, CanMaximize: false, ShowInTaskbar: false }, [
+          ctl('TextBlock', 'labelMessage', 20, 20, 400, 110, { Text: 'Are you sure?', TextWrapping: 'Wrap' }),
+          ctl('Button', 'buttonOK', 228, 158, 104, 32, { Content: 'Continue', Classes: 'accent', IsDefault: true }, { events: { Click: 'buttonOK_Click' } }),
+          ctl('Button', 'buttonCancel', 340, 158, 80, 32, { Content: 'Cancel', IsCancel: true }, { events: { Click: 'buttonCancel_Click' } }),
+        ], String.raw`# Confirmation dialog used by formExchangeAccess:
+#     $answer = Show-formConfirm -Owner $formExchangeAccess -Values @{ labelMessage = 'Remove ...?' }
+#     if ($answer.DialogResult -eq 'OK') { ... }
+
+$buttonOK_Click = {
+    param ($argumentList, $s, $e)
+    Close-Dialog 'OK'
+}
+
+$buttonCancel_Click = {
+    param ($argumentList, $s, $e)
+    Close-Dialog 'Cancel'
+}
+`);
+        return multi(main, confirm);
+      },
+    },
   ];
 })();
