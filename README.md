@@ -2,6 +2,8 @@
 
 A browser-based PowerShell GUI designer modeled on the SAPIEN PowerShell Studio form designer. It produces scripts for [GliderUI](https://github.com/mdgrs-mei/GliderUI) by [mdgrs-mei](https://github.com/mdgrs-mei), which provides Avalonia UI for PowerShell 7.4+ on Windows, macOS and Linux.
 
+**Try it online: [guicreator.mynster-it.dk](https://guicreator.mynster-it.dk)**. No install is needed to design and export. To run designs with F5, use the local launcher described below.
+
 > **New to GliderUI?** Watch the PowerShell Wednesday session [Building Cross-Platform GUIs with PowerShell and GliderUI](https://www.youtube.com/watch?v=ZeLMIPD68ZU) (PDQ on YouTube).
 
 There is no build step and nothing to install. Run `pwsh -File .\Start-GuiCreator.ps1` to use it with F5 runs, or just open `index.html` in a browser (Edge, Chrome or Firefox).
@@ -205,6 +207,12 @@ Invoke-Pester ./tests -Output Detailed     # needs Node.js and Pester 5+
 - every snippet, inserted into a real project.
 
 It checks that every wired handler is defined, that names are unique and allowed, and that the embedded project survives a save and reopen. [tests/Generated.Tests.ps1](tests/Generated.Tests.ps1) then checks the results with the PowerShell parser: no syntax errors, well-formed XAML with unique `x:Name`s, a launcher that parses, and the exported example. GitHub Actions runs all of this on every push ([.github/workflows/ci.yml](.github/workflows/ci.yml)), plus PSScriptAnalyzer on the launcher and snippets.
+
+## Publishing
+
+Every push to `main` publishes the designer to **https://guicreator.mynster-it.dk** through GitHub Pages ([.github/workflows/pages.yml](.github/workflows/pages.yml)). Before each publish, the workflow runs the generator checks, so a broken build is never deployed. The published site contains only what the web app needs: `index.html`, `css/`, `js/`, `examples/`, `snippets/`, the launcher script and this README.
+
+The hosted page works like a locally opened `index.html`: you can design, use the tour, the examples and the snippets, save, and export `.ps1` files. **Run (F5)** needs the local launcher, so clone the repo and run `pwsh -File .\Start-GuiCreator.ps1`. Designs are stored in your browser per site, so the hosted page and the local launcher keep separate autosaves. Use **Save Project** and **Open** to move a design between them.
 
 ## Files
 
