@@ -178,6 +178,27 @@
     return b;
   };
 
+  /** Names a control or form must not use: PowerShell automatic variables, the event handler
+   *  parameters ($argumentList, $s, $e), dialog parameters and names the generated code uses. */
+  GC.RESERVED_NAMES = new Set(
+    [
+      'args', 'input', 'this', 'PSItem', 'error', 'host', 'home', 'PID', 'PWD', 'null', 'true', 'false', 'matches', 'LASTEXITCODE',
+      'MyInvocation', 'profile', 'PSVersionTable', 'PSCmdlet', 'PSBoundParameters', 'ExecutionContext', 'sender', 'event', 'EventArgs',
+      'EventSubscriber', 'foreach', 'switch', 'OFS', 'ShellId', 'StackTrace', 'PSScriptRoot', 'PSCommandPath', 'PSCulture', 'PSUICulture',
+      'NestedPromptLevel', 'PSEdition', 'IsCoreCLR', 'IsLinux', 'IsMacOS', 'IsWindows', 'PSStyle', 'PSHOME', 'ConsoleFileName',
+      'ErrorActionPreference', 'WarningPreference', 'VerbosePreference', 'DebugPreference', 'ProgressPreference', 'ConfirmPreference',
+      'InformationPreference', 'WhatIfPreference', 'OutputEncoding', 'PSDefaultParameterValues', 'PSEmailServer', 'PSSessionOption',
+      'argumentList', 's', 'e', 'Owner', 'Values', 'Result',
+    ].map((n) => n.toLowerCase())
+  );
+  /** Why a name cannot be used, or '' when it is fine. */
+  GC.nameProblem = (name) => {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) return 'Names must start with a letter or _ and contain only letters, digits and _';
+    if (GC.RESERVED_NAMES.has(name.toLowerCase())) return `"${name}" is a PowerShell automatic variable or used by event handlers ($${name}); pick another name`;
+    if (/^__/.test(name)) return 'Names starting with __ are reserved for generated code';
+    return '';
+  };
+
   /** A handler counts as defined once the variable is assigned: a script block, an [EventCallback] or anything else. */
   GC.handlerRegex = (name) => new RegExp('^[ \\t]*\\$(?:script:)?' + name.replace(/[^A-Za-z0-9_]/g, '') + '\\s*=(?!=)', 'mi');
 

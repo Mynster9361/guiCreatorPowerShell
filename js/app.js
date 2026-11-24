@@ -958,11 +958,14 @@
   /** Handlers that are wired but never assigned, across all forms. */
   function problems() {
     const multi = project.forms.length > 1;
-    return project.forms.flatMap((d) =>
-      GC.bindings(d)
+    return project.forms.flatMap((d) => {
+      const where = multi ? `[${d.form.name}] ` : '';
+      const names = [d.form.name].concat(GC.allControls(d).map((c) => c.name));
+      return GC.bindings(d)
         .filter((b) => !GC.handlerRegex(b.handler).test(d.script))
-        .map((b) => `${multi ? `[${d.form.name}] ` : ''}$${b.target}.${b.event} is wired to $${b.handler}, which is not defined in that form's script.`)
-    );
+        .map((b) => `${where}$${b.target}.${b.event} is wired to $${b.handler}, which is not defined in that form's script.`)
+        .concat(names.filter((n) => GC.nameProblem(n)).map((n) => `${where}${GC.nameProblem(n)}.`));
+    });
   }
 
   function refreshHandlerJump() {
@@ -1359,8 +1362,9 @@
   function renameNode(node, newName) {
     const old = node.name;
     if (newName === old) return true;
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(newName)) {
-      toast('Names must start with a letter or _ and contain only letters, digits and _');
+    const problem = GC.nameProblem(newName);
+    if (problem) {
+      toast(problem);
       return false;
     }
     if (allNames().has(newName) || (node.id === 'form' && project.forms.some((d) => d.form.name === newName))) {
