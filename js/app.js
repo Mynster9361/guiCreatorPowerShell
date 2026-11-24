@@ -1701,15 +1701,30 @@
         return;
       }
       const file = mainName() + '.ps1';
-      const cmds = `# One-time setup (PowerShell 7.4 or newer)\nInstall-PSResource -Name GliderUI\nInstall-GLIServer\n\n# Run your GUI\npwsh -File .\\${file}`;
+      const repo = GC.CREDITS.repo;
+      const link = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${text}</a>`;
+      // Opened as a local file the user already has the launcher; on the website they need the project first.
+      const local = location.protocol === 'file:';
+      const glider = '# One-time: install GliderUI (needs PowerShell 7.4 or newer)\nInstall-PSResource -Name GliderUI\nInstall-GLIServer';
+      const launch = local
+        ? `${glider}\n\n# Start GUI Creator with its launcher (from the folder that contains index.html)\npwsh -File ./Start-GuiCreator.ps1`
+        : `${glider}\n\n# Get GUI Creator and start it with its launcher\ngit clone ${repo}.git\ncd guiCreatorPowerShell\npwsh -File ./Start-GuiCreator.ps1`;
+      const runExported = `${glider}\n\n# Run the exported script\npwsh -File ./${file}`;
       modal(
         'Run your GUI',
-        `<p><b>Run straight from the designer:</b> start GUI Creator through its local launcher, then press <b>F5</b>. Output and errors appear in an Output panel.</p><pre>pwsh -File .\\Start-GuiCreator.ps1</pre>
-        <p>The launcher serves this page on <code>http://localhost</code> and runs your design with <code>pwsh</code>. Without it, a web page cannot start PowerShell, so export the script and run it yourself with <b>PowerShell 7.4+</b>:</p><pre>${esc(cmds)}</pre>
-        <p>GliderUI renders the window in its own server process (Avalonia), so it runs on Windows, macOS and Linux.</p>
-        <p>The design is embedded at the end of the exported <code>.ps1</code>. Open that file here later to continue designing.</p>`,
+        `<p>A web page cannot start PowerShell by itself, so there are two ways to run your design:</p>
+        <p><b>1. Run with F5 from the designer (recommended).</b> ${local ? 'Start GUI Creator through its local launcher' : `Get GUI Creator from GitHub, ${link(repo, 'Mynster9361/guiCreatorPowerShell')}, and start its local launcher`}.
+        It opens the designer on <code>http://localhost</code>; then <b>F5</b> runs your window and shows its output and errors in an Output panel.</p>
+        <pre>${esc(launch)}</pre>
+        ${local ? '' : `<p>No git? ${link(GC.CREDITS.repoZip, 'Download the ZIP')}, extract it and run <code>Start-GuiCreator.ps1</code> from the extracted folder.
+        <br><b>Bring your design along:</b> designs are saved per site, so use <b>File &rarr; Save Project</b> here and <b>File &rarr; Open</b> in the local copy (or export the <code>.ps1</code> below and open that).</p>`}
+        <p><b>2. Export and run the script yourself.</b> Click <b>Export ${esc(file)}</b>, then:</p>
+        <pre>${esc(runExported)}</pre>
+        <p>GliderUI renders the window in its own process (Avalonia), so it runs on Windows, macOS and Linux. The design is embedded at the end of the exported <code>.ps1</code>; open that file in GUI Creator later to keep designing.
+        More in the ${link(repo + '#running-from-the-designer-f5', 'README on GitHub')}.</p>`,
         [
-          { label: 'Copy commands', action: () => copyText(cmds, 'Commands') },
+          { label: 'Open on GitHub', action: () => window.open(repo, '_blank', 'noopener') },
+          { label: 'Copy setup commands', action: () => copyText(launch, 'Setup commands') },
           { label: 'Export ' + file, primary: true, action: () => CMD.export() },
         ]
       );
@@ -1742,6 +1757,7 @@
     examples: () => window.open('https://github.com/mdgrs-mei/GliderUI/tree/main/examples', '_blank', 'noopener'),
     video: () => window.open(VIDEO_URL, '_blank', 'noopener'),
     author: () => window.open('https://github.com/mdgrs-mei', '_blank', 'noopener'),
+    repo: () => window.open(GC.CREDITS.repo, '_blank', 'noopener'),
   };
 
   // ---------------------------------------------------------------- menus, context menu, modal, toast
@@ -1810,7 +1826,7 @@
       ...[4, 8, 16].map((g) => I(`Grid Size ${g} px`, () => ((prefs.grid = g), savePrefs(), renderDesigner()), '', { checked: prefs.grid === g })),
     ],
     Examples: () => GC.EXAMPLES.map((ex) => I(ex.name, () => loadExample(ex), ex.tag)).concat('-', I('Browse GliderUI examples on GitHub', 'examples')),
-    Help: () => [I('Guided Tour...', () => GC.tour.open()), '-', I('Running Your GUI', 'run', 'F5'), I('Keyboard & Mouse', 'shortcuts'), '-', I('GliderUI on GitHub', 'gliderui'), I('GliderUI Examples', 'examples'), I('GliderUI author: mdgrs-mei', 'author'), I('Video: Building Cross-Platform GUIs with GliderUI', 'video'), '-', I('About GUI Creator', 'about')],
+    Help: () => [I('Guided Tour...', () => GC.tour.open()), '-', I('Running Your GUI', 'run', 'F5'), I('Keyboard & Mouse', 'shortcuts'), '-', I('GliderUI on GitHub', 'gliderui'), I('GliderUI Examples', 'examples'), I('GliderUI author: mdgrs-mei', 'author'), I('Video: Building Cross-Platform GUIs with GliderUI', 'video'), '-', I('GUI Creator on GitHub', 'repo'), I('About GUI Creator', 'about')],
   };
 
   function designerCtx(e) {
@@ -2049,7 +2065,7 @@
       const el = $('#stRunner');
       const i = GC.runner.info;
       el.textContent = ok ? `\u25B6 pwsh ${i.pwsh} \u00B7 GliderUI ${i.gliderui || 'not installed'}` : 'Runner offline';
-      el.title = ok ? 'Connected to Start-GuiCreator.ps1 - press F5 to run' : 'Start GUI Creator with Start-GuiCreator.ps1 to run designs with F5';
+      el.title = ok ? 'Connected to Start-GuiCreator.ps1 - press F5 to run' : 'Runner offline: click to see how to run your GUI (get GUI Creator from GitHub and start Start-GuiCreator.ps1, then F5 runs your design)';
       el.classList.toggle('off', !ok);
     });
 

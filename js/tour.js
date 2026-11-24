@@ -173,8 +173,9 @@
         GC.runner && GC.runner.available
           ? `Press ${kbd('F5')} (or <b>Run</b>). Your window opens with PowerShell, and its output and errors appear in the <b>Output</b> panel.
             Errors show a <b>line N</b> link that jumps to the code. ${kbd('Shift+F5')} stops it.<br><br><b>Run your window now</b>, type a name and click the button.`
-          : `To run straight from the designer, start GUI Creator with ${code('pwsh -File .\\Start-GuiCreator.ps1')}; then ${kbd('F5')} runs your window
-            and shows its output here.<br><br>Without the launcher, use <b>Export .ps1</b> and run the file with PowerShell 7.4+ and GliderUI installed.`,
+          : `To run straight from the designer, get GUI Creator from <a href="${GC.CREDITS.repo}" target="_blank" rel="noopener">GitHub</a>
+            and start it with its local launcher, ${code('pwsh -File ./Start-GuiCreator.ps1')}; then ${kbd('F5')} runs your window and shows its output here.
+            Click <b>Run</b> any time for the step-by-step commands.<br><br>Without the launcher, use <b>Export .ps1</b> and run the file with PowerShell 7.4+ and GliderUI installed.`,
       done: () => GC.runner && GC.runner.available && !$('#outputPanel').hidden,
     },
 
