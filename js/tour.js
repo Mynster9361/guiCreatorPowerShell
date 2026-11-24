@@ -330,9 +330,12 @@ if ($result.DialogResult -eq 'OK') {
     {
       chapter: 'advanced',
       title: "You're all set!",
-      body: `That's the tour. Handy references:<ul>
+      body: () => `That's the tour. Handy references:<ul>
         <li><b>Help → Keyboard &amp; Mouse</b> for all shortcuts,</li><li><b>Help → Guided Tour</b> to take this tour again or jump to a chapter,</li>
-        <li><b>README.md</b> for how the generated scripts work.</li></ul>`,
+        <li><b>README.md</b> for how the generated scripts work.</li></ul>
+        Everything GUI Creator builds runs on <a href="${GC.CREDITS.gliderUrl}" target="_blank" rel="noopener">GliderUI</a> by
+        <a href="${GC.CREDITS.authorUrl}" target="_blank" rel="noopener">${GC.CREDITS.author}</a>. To learn more about GliderUI itself, watch the PowerShell Wednesday session
+        <a href="${GC.CREDITS.video}" target="_blank" rel="noopener">${GC.CREDITS.videoTitle}</a>.`,
     },
   ];
 
@@ -538,7 +541,8 @@ if ($result.DialogResult -eq 'OK') {
     localStorage.setItem(SEEN, '1');
     app().modal(
       'Welcome to GUI Creator',
-      `<p>Design PowerShell GUIs visually, write the event handlers, and export (or run) a script that uses <b>GliderUI</b>.</p>
+      `<p>Design PowerShell GUIs visually, write the event handlers, and export (or run) a script that uses
+       <a href="${GC.CREDITS.gliderUrl}" target="_blank" rel="noopener"><b>GliderUI</b></a> by ${GC.CREDITS.author}.</p>
        <p>New here? A short interactive tour shows you everything from your first button to multi-window apps.</p>`,
       [
         { label: 'Maybe later', action: () => app().closeModal() },

@@ -368,3 +368,7 @@ kbd { font: 11px var(--mono); background: var(--bg3); border: 1px solid #50535b;
 .tour-ch span { grid-column: 1; color: var(--tx2); font-size: 12px; }
 .tour-ch em { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: var(--tx2); font-style: normal; font-size: 12px; }
 .tour-note { color: var(--tx2); font-size: 12px; }
+
+/* links inside dialogs and the tour (readable on the dark theme) */
+.modal-body a, .tour-body a { color: #8fb8ee; }
+.modal-body a:hover, .tour-body a:hover { color: #b5d1f5; }

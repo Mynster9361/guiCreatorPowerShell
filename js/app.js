@@ -82,6 +82,7 @@
   // ---------------------------------------------------------------- state
   const STORE = 'guiCreator.project.v1';
   const PREFS = 'guiCreator.prefs.v1';
+  const VIDEO_URL = GC.CREDITS.video;
   let project;
   const index = new Map();
   let selection = [];
@@ -1731,12 +1732,16 @@
       modal(
         'About GUI Creator',
         `<p>A PowerShell GUI designer in the spirit of SAPIEN PowerShell Studio's form designer, producing scripts for <a href="https://github.com/mdgrs-mei/GliderUI" target="_blank" rel="noopener">GliderUI</a> (Avalonia UI for PowerShell).</p>
-        <p><b>How the generated script works:</b> the designer writes XAML with a <code>Canvas</code> for absolute positioning, loads it with <code>[AvaloniaRuntimeXamlLoader]::Parse()</code>, gets every named control with <code>$window.FindControl('name')</code> and wires your handlers with <code>$control.Add&lt;Event&gt;($handler)</code>.</p>
+        <p><b>Built on GliderUI by <a href="https://github.com/mdgrs-mei" target="_blank" rel="noopener">mdgrs-mei</a>.</b> GliderUI does all the real work: it runs Avalonia in its own process and makes every control, property and event available to PowerShell, so a script can build a native, cross-platform window. GUI Creator only writes the script; the examples in the Examples menu are mdgrs-mei's GliderUI examples, rebuilt as designs (MIT License).</p>
+        <p>New to GliderUI? Watch the PowerShell Wednesday session <a href="${VIDEO_URL}" target="_blank" rel="noopener">Building Cross-Platform GUIs with PowerShell and GliderUI</a> (PDQ, YouTube).</p>
+        <p><b>How the generated script works:</b> the designer writes XAML (controls in a <code>Grid</code> with margins and alignments, so Anchor can resize them), loads it with <code>[AvaloniaRuntimeXamlLoader]::Parse()</code>, gets every named control with <code>$window.FindControl('name')</code> and wires your handlers with <code>$control.Add&lt;Event&gt;($handler)</code>.</p>
         <p>The designer preview approximates the Avalonia Fluent theme; exact sizes can differ slightly at run time.</p>`
       );
     },
     gliderui: () => window.open('https://github.com/mdgrs-mei/GliderUI', '_blank', 'noopener'),
     examples: () => window.open('https://github.com/mdgrs-mei/GliderUI/tree/main/examples', '_blank', 'noopener'),
+    video: () => window.open(VIDEO_URL, '_blank', 'noopener'),
+    author: () => window.open('https://github.com/mdgrs-mei', '_blank', 'noopener'),
   };
 
   // ---------------------------------------------------------------- menus, context menu, modal, toast
@@ -1805,7 +1810,7 @@
       ...[4, 8, 16].map((g) => I(`Grid Size ${g} px`, () => ((prefs.grid = g), savePrefs(), renderDesigner()), '', { checked: prefs.grid === g })),
     ],
     Examples: () => GC.EXAMPLES.map((ex) => I(ex.name, () => loadExample(ex), ex.tag)).concat('-', I('Browse GliderUI examples on GitHub', 'examples')),
-    Help: () => [I('Guided Tour...', () => GC.tour.open()), '-', I('Running Your GUI', 'run', 'F5'), I('Keyboard & Mouse', 'shortcuts'), '-', I('GliderUI on GitHub', 'gliderui'), I('GliderUI Examples', 'examples'), '-', I('About GUI Creator', 'about')],
+    Help: () => [I('Guided Tour...', () => GC.tour.open()), '-', I('Running Your GUI', 'run', 'F5'), I('Keyboard & Mouse', 'shortcuts'), '-', I('GliderUI on GitHub', 'gliderui'), I('GliderUI Examples', 'examples'), I('GliderUI author: mdgrs-mei', 'author'), I('Video: Building Cross-Platform GUIs with GliderUI', 'video'), '-', I('About GUI Creator', 'about')],
   };
 
   function designerCtx(e) {

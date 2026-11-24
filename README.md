@@ -1,6 +1,8 @@
 # GUI Creator
 
-A browser-based PowerShell GUI designer modeled on the SAPIEN PowerShell Studio form designer. It produces scripts for [GliderUI](https://github.com/mdgrs-mei/GliderUI), which provides Avalonia UI for PowerShell 7.4+ on Windows, macOS and Linux.
+A browser-based PowerShell GUI designer modeled on the SAPIEN PowerShell Studio form designer. It produces scripts for [GliderUI](https://github.com/mdgrs-mei/GliderUI) by [mdgrs-mei](https://github.com/mdgrs-mei), which provides Avalonia UI for PowerShell 7.4+ on Windows, macOS and Linux.
+
+> **New to GliderUI?** Watch the PowerShell Wednesday session [Building Cross-Platform GUIs with PowerShell and GliderUI](https://www.youtube.com/watch?v=ZeLMIPD68ZU) (PDQ on YouTube).
 
 There is no build step and nothing to install. Run `pwsh -File .\Start-GuiCreator.ps1` to use it with F5 runs, or just open `index.html` in a browser (Edge, Chrome or Firefox).
 
@@ -224,3 +226,13 @@ It checks that every wired handler is defined, that names are unique and allowed
 
 - The designer preview approximates Avalonia's Fluent theme, so sizes can differ slightly when the script runs.
 - Property and event names follow Avalonia (for example `Content`, `IsChecked`, `SelectionChanged`). To add a control or property, add an entry to `TYPES` in `js/controls.js`.
+
+## Credits
+
+GUI Creator would not exist without **[GliderUI](https://github.com/mdgrs-mei/GliderUI)** by **[mdgrs-mei](https://github.com/mdgrs-mei)**. GliderUI does the hard part: it runs [Avalonia UI](https://avaloniaui.net/) in its own server process and makes the controls, properties and events available to PowerShell. A plain PowerShell 7 script can then build a native, cross-platform window, with responsive event callbacks and background runspaces. GUI Creator only designs the window and writes the script; everything it builds runs on GliderUI.
+
+- **GliderUI:** [github.com/mdgrs-mei/GliderUI](https://github.com/mdgrs-mei/GliderUI). Install it with `Install-PSResource -Name GliderUI` and then `Install-GLIServer`.
+- **Learn GliderUI:** the PowerShell Wednesday session [Building Cross-Platform GUIs with PowerShell and GliderUI](https://www.youtube.com/watch?v=ZeLMIPD68ZU) (PDQ on YouTube).
+- **Examples:** the Examples menu contains mdgrs-mei's [GliderUI examples](https://github.com/mdgrs-mei/GliderUI/tree/main/examples), rebuilt as designs under GliderUI's MIT License (Copyright (c) 2026 mdgrs-mei). The XAML loading, `[EventCallback]`, runspace pool, `DataSource` and storage-provider patterns that GUI Creator generates and offers as snippets all come from those examples.
+
+If GUI Creator is useful to you, please star [GliderUI](https://github.com/mdgrs-mei/GliderUI) too.
