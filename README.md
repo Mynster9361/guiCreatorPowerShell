@@ -190,6 +190,20 @@ Tested with GliderUI 0.5.0 (Avalonia 12) on PowerShell 7.6, Windows 11.
 4. Your Script tab code is inserted next. Handlers are script blocks: `$button1_Click = { param($argumentList, $s, $e) ... }`.
 5. The script connects each handler with `$button1.AddClick($button1_Click)`, then calls `$formMain.Show()` and `$formMain.WaitForClosed()`.
 
+## Tests
+
+```powershell
+Invoke-Pester ./tests -Output Detailed     # needs Node.js and Pester 5+
+```
+
+[tests/build-test-scripts.mjs](tests/build-test-scripts.mjs) loads the designer's code generator in Node.js and generates:
+
+- every example,
+- a form that uses every control type, anchor and container,
+- every snippet, inserted into a real project.
+
+It checks that every wired handler is defined, that names are unique and allowed, and that the embedded project survives a save and reopen. [tests/Generated.Tests.ps1](tests/Generated.Tests.ps1) then checks the results with the PowerShell parser: no syntax errors, well-formed XAML with unique `x:Name`s, a launcher that parses, and the exported example. GitHub Actions runs all of this on every push ([.github/workflows/ci.yml](.github/workflows/ci.yml)), plus PSScriptAnalyzer on the launcher and snippets.
+
 ## Files
 
 | File | Purpose |
@@ -202,6 +216,7 @@ Tested with GliderUI 0.5.0 (Avalonia 12) on PowerShell 7.6, Windows 11.
 | `js/examples.js` | GliderUI examples as designer projects |
 | `js/runner.js` | Talks to the local launcher: run, stop, Output panel |
 | `Start-GuiCreator.ps1` | Local launcher: serves the page and runs designs with pwsh |
+| `js/snippets.js` | Code snippets for the Script tab |
 | `js/tour.js` | Interactive guided tour (steps, spotlight, practice project) |
 | `js/app.js` | Designer, property grid, menus, commands |
 
@@ -209,4 +224,3 @@ Tested with GliderUI 0.5.0 (Avalonia 12) on PowerShell 7.6, Windows 11.
 
 - The designer preview approximates Avalonia's Fluent theme, so sizes can differ slightly when the script runs.
 - Property and event names follow Avalonia (for example `Content`, `IsChecked`, `SelectionChanged`). To add a control or property, add an entry to `TYPES` in `js/controls.js`.
-| `js/snippets.js` | Code snippets for the Script tab |

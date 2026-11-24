@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Generate and verify scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: JavaScript syntax
+        run: for f in js/*.js tests/*.mjs; do node --check "$f"; done
+
+      - name: Generator consistency checks
+        run: node tests/build-test-scripts.mjs "$RUNNER_TEMP/generated"
+
+      - name: Pester tests (PowerShell parser + XAML)
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable Pester | Where-Object Version -GE '5.0')) {
+              Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          }
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+      - name: PSScriptAnalyzer (errors only)
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable PSScriptAnalyzer)) {
+              Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+          }
+          $issues = foreach ($p in './Start-GuiCreator.ps1', './snippets') { Invoke-ScriptAnalyzer -Path $p -Recurse -Severity Error }
+          $issues | Format-Table -AutoSize
+          if ($issues) { exit 1 }
