@@ -234,6 +234,21 @@
       },
       textarea: ta,
       focus: () => ta.focus(),
+      /** Insert text at the caret (on its own lines), keeping native undo. */
+      insertBlock(text) {
+        ta.focus();
+        const v = ta.value;
+        const s = ta.selectionStart;
+        const lineStart = v.lastIndexOf('\n', s - 1) + 1;
+        const atLineStart = v.slice(lineStart, s).trim() === '';
+        const indent = v.slice(lineStart, s).match(/^[ \t]*/)[0];
+        let block = text.replace(/\n/g, '\n' + indent);
+        if (!atLineStart) block = '\n' + indent + block;
+        ta.setSelectionRange(atLineStart ? lineStart + indent.length : s, ta.selectionEnd);
+        insert(block + '\n' + indent);
+        render();
+        opts.onChange && opts.onChange(ta.value);
+      },
       refresh: render,
       /** Select a range and scroll it into view. */
       select(start, end) {

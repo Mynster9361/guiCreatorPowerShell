@@ -66,6 +66,15 @@ The generated XAML places controls in a `Grid` using `Margin` and `HorizontalAli
 
   Press Ctrl+Space to open it on demand. Use ↑/↓ to choose, Enter or Tab to accept, and Esc to close.
 - **Undo:** the Script tab keeps the editor's own undo. Ctrl+Z in the designer also undoes the script changes the designer made, such as a handler stub from double-clicking or a rename, unless you have typed in that script since.
+- **Snippets:** the **Insert snippet...** menu adds a ready-made code pattern at the cursor, filled in with your form's real control names:
+  - **Basics:** an event handler, reading and validating input, changing a color.
+  - **Lists and data:** filling a ComboBox or ListBox, filling a DataGrid with objects, reading the selected rows.
+  - **Long-running work:** disabling buttons while a handler runs, a progress-bar loop, background work with Cancel.
+  - **Dialogs:** a Yes/No message box, showing a dialog form and using its result, `Close-Dialog`, file, save and folder pickers.
+  - **Window:** wizard Next/Back, remembering settings between runs, closing the window.
+
+  Snippets that only apply to dialogs or wizards appear only when they fit the current form.
+- **Reserved names:** a control can't be named after a PowerShell automatic variable (`input`, `host`, `error`, `args`, …) or the handler parameters `s`, `e` and `argumentList`. Those names would break the script silently. The problem checker also flags them in imported projects.
 
 ## Multiple forms (dialogs)
 
@@ -200,3 +209,4 @@ Tested with GliderUI 0.5.0 (Avalonia 12) on PowerShell 7.6, Windows 11.
 
 - The designer preview approximates Avalonia's Fluent theme, so sizes can differ slightly when the script runs.
 - Property and event names follow Avalonia (for example `Content`, `IsChecked`, `SelectionChanged`). To add a control or property, add an entry to `TYPES` in `js/controls.js`.
+| `js/snippets.js` | Code snippets for the Script tab |

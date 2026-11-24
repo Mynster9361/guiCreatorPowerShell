@@ -402,7 +402,7 @@
       : 'Your functions and event handlers. Controls are variables named after their <b>(Name)</b>, e.g. <code>$button1</code>.';
     if (editors.script && editors.script.value !== doc.script) editors.script.value = doc.script;
     if (activeTab === 'generated' || activeTab === 'xaml') refreshGenerated();
-    if (activeTab === 'script') refreshHandlerJump();
+    if (activeTab === 'script') (refreshHandlerJump(), refreshSnippets());
   }
 
   const accel = (s) => esc(s).replace(/_(.)/, '<u>$1</u>').replace(/_/g, '');
@@ -966,6 +966,40 @@
         .map((b) => `${where}$${b.target}.${b.event} is wired to $${b.handler}, which is not defined in that form's script.`)
         .concat(names.filter((n) => GC.nameProblem(n)).map((n) => `${where}${GC.nameProblem(n)}.`));
     });
+  }
+
+  /** Names of the current form, used to fill in snippets. */
+  function snippetContext() {
+    const ctls = GC.allControls(doc);
+    return {
+      form: doc.form.name,
+      owner: doc.form.name,
+      isDialog: isDialog(),
+      dialogs: project.forms.filter((d, i) => i > 0 && d !== doc).map((d) => d.form.name),
+      hasPages: ctls.some((c) => c.type === 'Pages'),
+      first: (type, fallback) => {
+        const c = ctls.find((x) => x.type === type);
+        return c ? c.name : fallback;
+      },
+    };
+  }
+  function refreshSnippets() {
+    const sel = $('#snippetPick');
+    const ctx = snippetContext();
+    const groups = new Map();
+    (GC.SNIPPETS || []).forEach((s, i) => {
+      if (s.available && !s.available(ctx)) return;
+      if (!groups.has(s.group)) groups.set(s.group, h('optgroup', { label: s.group }));
+      groups.get(s.group).append(h('option', { value: i, title: s.description }, s.name));
+    });
+    sel.replaceChildren(h('option', { value: '' }, 'Insert snippet...'), ...groups.values());
+  }
+  function insertSnippet(i) {
+    const s = GC.SNIPPETS[i];
+    if (!s) return;
+    editors.script.insertBlock(s.code(snippetContext()));
+    refreshHandlerJump();
+    status(`Inserted snippet: ${s.name}`);
   }
 
   function refreshHandlerJump() {
@@ -1817,6 +1851,7 @@
       editors.script.value = doc.script;
       editors.script.refresh();
       refreshHandlerJump();
+      refreshSnippets();
     }
     if (name === 'generated' || name === 'xaml') refreshGenerated();
     if (name === 'designer') renderOverlay();
@@ -1930,6 +1965,10 @@
     $('#sortBtn').addEventListener('click', () => ((alpha = !alpha), renderProps()));
     $('#objSelect').addEventListener('change', (e) => e.target.value && select([e.target.value]));
     $('#toolSearch').addEventListener('input', renderToolbox);
+    $('#snippetPick').addEventListener('change', (e) => {
+      if (e.target.value !== '') insertSnippet(+e.target.value);
+      e.target.value = '';
+    });
     $('#handlerJump').addEventListener('change', (e) => {
       if (e.target.value) gotoHandler(e.target.value);
       e.target.value = '';
