@@ -21,7 +21,7 @@ jobs:
           node-version: 22
 
       - name: JavaScript syntax
-        run: for f in js/*.js tests/*.mjs; do node --check "$f"; done
+        run: for f in js/*.js tests/*.mjs tests/tools/*.mjs; do node --check "$f"; done
 
       - name: Generator consistency checks
         run: node tests/build-test-scripts.mjs "$RUNNER_TEMP/generated"

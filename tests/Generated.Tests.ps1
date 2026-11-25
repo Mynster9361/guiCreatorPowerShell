@@ -71,6 +71,13 @@ Describe 'Launcher script' {
         [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot '..' 'Start-GuiCreator.ps1'), [ref]$null, [ref]$errors)
         $errors | Should -BeNullOrEmpty
     }
+    It 'the PowerShell test tools in tests/tools parse without errors' {
+        foreach ($file in Get-ChildItem (Join-Path $PSScriptRoot 'tools') -Include *.ps1, *.psm1 -Recurse) {
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$errors)
+            $errors | Should -BeNullOrEmpty -Because $file.Name
+        }
+    }
     It 'the exported example in examples/ parses and contains its design' {
         $file = Join-Path $PSScriptRoot '..' 'examples' 'ExchangeOnlineAccessControl.ps1'
         $errors = $null
