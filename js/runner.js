@@ -88,6 +88,24 @@
     get running() {
       return state.running;
     },
+    /** True when the launcher can run designs: GliderUI and its matching server are installed. */
+    get ready() {
+      return state.available && !!(state.info && state.info.ready);
+    },
+    /** Why designs cannot run right now ('' when ready). */
+    get problem() {
+      return state.available && state.info && !state.info.ready ? state.info.problem || 'GliderUI is not ready.' : '';
+    },
+    /** Ask the launcher again (e.g. after the user installed GliderUI or the server). */
+    async refresh() {
+      if (!state.available) return false;
+      try {
+        state.info = await api('/api/ping');
+      } catch (e) {
+        /* keep the last known state */
+      }
+      return this.ready;
+    },
     /** Called with (scriptText, lineNumber) when an error location is clicked. */
     set onLink(fn) {
       state.onLink = fn;

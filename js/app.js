@@ -1503,10 +1503,14 @@
       undo: !undoStack.length, redo: !redoStack.length, cut: !n, copy: !n, paste: !clip, delete: !n && !selection.includes('menu'),
       alignL: !fm || fm.length < 2, alignC: !fm || fm.length < 2, alignR: !fm || fm.length < 2, alignT: !fm || fm.length < 2, alignM: !fm || fm.length < 2, alignB: !fm || fm.length < 2,
       sameW: !fm || fm.length < 2, sameH: !fm || fm.length < 2, centerH: !fm, centerV: !fm, front: !n, back: !n, stop: !GC.runner.running,
+      // Served by the launcher but GliderUI (or its server) is missing: running cannot work.
+      run: GC.runner.available && !GC.runner.ready,
     };
     $$('#toolbar .tb').forEach((b) => {
       b.disabled = !!dis[b.dataset.cmd];
     });
+    const runBtn = $('#toolbar [data-cmd=run]');
+    if (runBtn) runBtn.title = dis.run ? `Run is unavailable: ${GC.runner.problem}` : 'Run the GUI with pwsh (F5)';
     const on = { toggleGrid: prefs.showGrid, toggleSnap: prefs.snap, toggleSnaplines: prefs.snaplines };
     $$('#toolbar .tb').forEach((b) => b.dataset.cmd in on && b.classList.toggle('on', on[b.dataset.cmd]));
   }
@@ -1694,6 +1698,28 @@
     toggleSnap: () => ((prefs.snap = !prefs.snap), savePrefs(), updateToolbar()),
     toggleSnaplines: () => ((prefs.snaplines = !prefs.snaplines), savePrefs(), updateToolbar()),
     run() {
+      if (GC.runner.available && !GC.runner.ready) {
+        // F5 while the Run button is greyed out: say why, and let the user check again after installing.
+        const cmds = GC.runner.info && GC.runner.info.gliderui ? 'Install-GLIServer' : 'Install-PSResource -Name GliderUI\nInstall-GLIServer';
+        return modal(
+          'GliderUI is not ready',
+          `<p>${esc(GC.runner.problem)}</p><p>Run this in PowerShell 7, then click <b>Check again</b> (GUI Creator also re-checks when you come back to this page):</p><pre>${esc(cmds)}</pre>
+          <p>The GliderUI server does not need to be started: every GUI script starts its own server process and stops it when the window closes. It only has to be installed, in the same version as the GliderUI module.</p>`,
+          [
+            { label: 'Copy commands', action: () => copyText(cmds, 'Commands') },
+            {
+              label: 'Check again',
+              primary: true,
+              action: async () => {
+                await GC.runner.refresh();
+                updateRunnerStatus();
+                $('#modal').hidden = true;
+                toast(GC.runner.ready ? 'GliderUI is ready - press F5 to run' : GC.runner.problem);
+              },
+            },
+          ]
+        );
+      }
       if (GC.runner.available) {
         const pr = problems();
         if (pr.length) toast(`Running with ${pr.length} problem${pr.length > 1 ? 's' : ''} - see the status bar`);
@@ -2060,13 +2086,18 @@
     $('#outStop').addEventListener('click', () => GC.runner.stop());
     $('#outClear').addEventListener('click', () => GC.runner.clear());
     $('#outClose').addEventListener('click', () => GC.runner.hide());
-    $('#stRunner').addEventListener('click', () => (GC.runner.available ? GC.runner.show() : CMD.run()));
-    GC.runner.init().then((ok) => {
-      const el = $('#stRunner');
-      const i = GC.runner.info;
-      el.textContent = ok ? `\u25B6 pwsh ${i.pwsh} \u00B7 GliderUI ${i.gliderui || 'not installed'}` : 'Runner offline';
-      el.title = ok ? 'Connected to Start-GuiCreator.ps1 - press F5 to run' : 'Runner offline: click to see how to run your GUI (get GUI Creator from GitHub and start Start-GuiCreator.ps1, then F5 runs your design)';
-      el.classList.toggle('off', !ok);
+    $('#stRunner').addEventListener('click', async () => {
+      if (!GC.runner.available) return CMD.run();
+      if (!GC.runner.ready) await GC.runner.refresh(), updateRunnerStatus();
+      GC.runner.ready ? GC.runner.show() : CMD.run();
+    });
+    GC.runner.init().then(() => {
+      updateRunnerStatus();
+      // While GliderUI is missing, check again when the user comes back to the page (e.g. after
+      // running Install-GLIServer in a terminal) and every 15 seconds.
+      const recheck = async () => GC.runner.available && !GC.runner.ready && (await GC.runner.refresh(), updateRunnerStatus());
+      window.addEventListener('focus', recheck);
+      setInterval(recheck, 15000);
     });
 
     renderAll();
@@ -2167,6 +2198,27 @@
     // commands only once a "-" is typed (Get-, Show-, ...) or on Ctrl+Space, so words like "foreach" are left alone
     if ((m = before.match(/(?:^|[\s(;{|=])([A-Za-z][\w-]*)$/)) && (explicit || m[1].includes('-'))) return { from: pos - m[1].length, items: commandItems() };
     return null;
+  }
+
+  /** Status bar text for the local runner, and the Run button's enabled state. */
+  function updateRunnerStatus() {
+    const el = $('#stRunner');
+    const r = GC.runner;
+    const i = r.info || {};
+    el.classList.remove('off', 'warn');
+    if (!r.available) {
+      el.textContent = 'Runner offline';
+      el.title = 'Runner offline: click to see how to run your GUI (get GUI Creator from GitHub and start Start-GuiCreator.ps1, then F5 runs your design)';
+      el.classList.add('off');
+    } else if (!r.ready) {
+      el.textContent = `⚠ ${i.gliderui ? 'GliderUI server not installed' : 'GliderUI not installed'}`;
+      el.title = r.problem + ' (click to check again)';
+      el.classList.add('warn');
+    } else {
+      el.textContent = `▶ pwsh ${i.pwsh} · GliderUI ${i.gliderui}`;
+      el.title = `Connected to Start-GuiCreator.ps1 (${i.server}) - press F5 to run`;
+    }
+    updateToolbar();
   }
 
   /** Jump from "run-xxxx.ps1:<line>" in the Output panel to the matching code. */

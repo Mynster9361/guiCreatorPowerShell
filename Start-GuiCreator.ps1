@@ -37,11 +37,28 @@ $pwshPath = (Get-Process -Id $PID).Path
 $maxBody = 10MB
 $script:run = $null
 
-$gliderUI = Get-Module -ListAvailable -Name GliderUI | Sort-Object Version -Descending | Select-Object -First 1
-$info = [ordered]@{
-    ok       = $true
-    pwsh     = $PSVersionTable.PSVersion.ToString()
-    gliderui = if ($gliderUI) { $gliderUI.Version.ToString() } else { $null }
+# Can designs run here? GliderUI starts its own server process for every script it runs, so the
+# server is never running beforehand; what matters is that the GliderUI module and the server
+# package of the *same version* (Install-GLIServer) are installed. Checked on every request
+# (~25 ms), so installing them while GUI Creator is open is picked up without a restart.
+function Get-RunnerInfo {
+    $module = Get-Module -ListAvailable -Name GliderUI | Sort-Object Version -Descending | Select-Object -First 1
+    $server = if ($module) {
+        Get-Module -ListAvailable -Name 'GliderUI.Server.*' | Where-Object Version -EQ $module.Version | Select-Object -First 1
+    }
+    $problem = if (-not $module) {
+        'GliderUI is not installed. Run: Install-PSResource -Name GliderUI; Install-GLIServer'
+    } elseif (-not $server) {
+        "The GliderUI server for GliderUI $($module.Version) is not installed. Run: Install-GLIServer"
+    }
+    [ordered]@{
+        ok       = $true
+        pwsh     = $PSVersionTable.PSVersion.ToString()
+        gliderui = if ($module) { $module.Version.ToString() } else { $null }
+        server   = if ($server) { $server.Name + ' ' + $server.Version } else { $null }
+        ready    = -not $problem
+        problem  = $problem
+    }
 }
 
 $contentTypes = @{
@@ -143,9 +160,11 @@ function Invoke-Request($Context) {
     if ($path.StartsWith('/api/')) {
         if ($req.Headers['X-GuiCreator-Token'] -ne $token) { return Send-Json $Context @{ error = 'Missing or wrong token' } 403 }
         switch ($path) {
-            '/api/ping' { return Send-Json $Context $info }
+            '/api/ping' { return Send-Json $Context (Get-RunnerInfo) }
             '/api/run' {
                 if ($req.HttpMethod -ne 'POST') { return Send-Json $Context @{ error = 'POST required' } 405 }
+                $runner = Get-RunnerInfo
+                if (-not $runner.ready) { return Send-Json $Context @{ error = $runner.problem } 409 }
                 $body = Read-Body $req | ConvertFrom-Json
                 if (-not $body.script) { return Send-Json $Context @{ error = 'No script' } 400 }
                 return Send-Json $Context @{ id = (Start-Run $body.script) }
@@ -209,7 +228,9 @@ if (-not $listener) { throw "No free port found between $Port and $($Port + 19).
 $url = "http://localhost:$Port/"
 Write-Host ''
 Write-Host "  GUI Creator is running at $url" -ForegroundColor Green
-Write-Host "  PowerShell $($info.pwsh), GliderUI $(if ($info.gliderui) { $info.gliderui } else { 'NOT INSTALLED (Install-PSResource GliderUI; Install-GLIServer)' })"
+$runnerInfo = Get-RunnerInfo
+Write-Host "  PowerShell $($runnerInfo.pwsh), GliderUI $(if ($runnerInfo.gliderui) { $runnerInfo.gliderui } else { 'not installed' }), server $(if ($runnerInfo.server) { $runnerInfo.server } else { 'not installed' })"
+if (-not $runnerInfo.ready) { Write-Host "  Run (F5) is disabled until this is fixed: $($runnerInfo.problem)" -ForegroundColor Yellow }
 Write-Host '  Press Ctrl+C to stop.'
 Write-Host ''
 if (-not $NoBrowser) {

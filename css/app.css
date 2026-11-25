@@ -372,3 +372,5 @@ kbd { font: 11px var(--mono); background: var(--bg3); border: 1px solid #50535b;
 /* links inside dialogs and the tour (readable on the dark theme) */
 .modal-body a, .tour-body a { color: #8fb8ee; }
 .modal-body a:hover, .tour-body a:hover { color: #b5d1f5; }
+#statusbar .st-btn.warn { color: #ffe08a; }
+#toolbar .tb.run:disabled { background: #3a3d44; color: #8b8f98; opacity: 1; cursor: not-allowed; }
