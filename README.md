@@ -176,17 +176,28 @@ If you open `index.html` directly, everything except running works. The status b
 ## Running the exported script
 
 ```powershell
-# one-time setup
-Install-PSResource -Name GliderUI
-Install-GLIServer
-
 pwsh -File .\formMain.ps1
 ```
 
-Tested with GliderUI 0.5.0 (Avalonia 12) on PowerShell 7.6, Windows 11.
+That's all you need on a machine with PowerShell 7.4+. By default, an exported script checks first whether GliderUI and its matching server are installed:
 
-- If `Install-PSResource` installs an older version, which can happen right after a new release, pin it: `Install-PSResource -Name GliderUI -Version 0.5.0`.
-- In a non-interactive session, run `Install-GLIServer -TrustRepository` so it doesn't stop to ask for confirmation.
+- If GliderUI is missing, it installs it for the current user with `Install-PSResource -Name GliderUI -Scope CurrentUser`. No admin rights are needed.
+- If the server is missing, it runs `Install-GLIServer`. This happens in a separate `pwsh`, because GliderUI only finds a server that already existed when the module was imported.
+- Then it imports GliderUI.
+
+The first run takes a little longer (about 15 seconds when nothing was installed); later runs start as usual. There is nothing to *start*: GliderUI starts its own server process when the window opens and stops it when the window closes.
+
+You can change this with the **GliderUISetup** property of the startup form:
+
+| GliderUISetup | When GliderUI or its server is missing |
+| --- | --- |
+| **InstallIfMissing** (default) | installs it for the current user, then runs |
+| **CheckOnly** | stops with a message that names the command to run |
+| **ImportOnly** | plain `Import-Module GliderUI`, as in the GliderUI examples |
+
+With the local launcher, Run stays available when the server is missing as long as the design uses InstallIfMissing. The Output panel shows the installation.
+
+Tested with GliderUI 0.5.0 and 0.6.0 (Avalonia 12) on PowerShell 7.6, Windows 11. To install GliderUI yourself instead: `Install-PSResource -Name GliderUI`, then `Install-GLIServer` (add `-TrustRepository` in a non-interactive session).
 
 ## How the generated script works
 

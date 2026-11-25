@@ -397,6 +397,7 @@
     renderProps();
     renderStatus();
     updateToolbar();
+    if (runnerChecked) updateRunnerStatus(); // its text depends on the GliderUISetup setting
     $('#docTitle').textContent = mainName() + '.ps1' + (project.forms.length > 1 ? '  —  ' + doc.form.name : '');
     $('#scriptHint').innerHTML = isDialog()
       ? `<b>Dialog form.</b> Show it with <code>$result = Show-${esc(doc.form.name)} -Owner $${esc(mainName())}</code>; close it with <code>Close-Dialog 'OK'</code>.`
@@ -1506,7 +1507,7 @@
       alignL: !fm || fm.length < 2, alignC: !fm || fm.length < 2, alignR: !fm || fm.length < 2, alignT: !fm || fm.length < 2, alignM: !fm || fm.length < 2, alignB: !fm || fm.length < 2,
       sameW: !fm || fm.length < 2, sameH: !fm || fm.length < 2, centerH: !fm, centerV: !fm, front: !n, back: !n, stop: !GC.runner.running,
       // Served by the launcher but GliderUI (or its server) is missing: running cannot work.
-      run: GC.runner.available && !GC.runner.ready,
+      run: GC.runner.available && !GC.runner.ready && !selfInstalls(),
     };
     $$('#toolbar .tb').forEach((b) => {
       b.disabled = !!dis[b.dataset.cmd];
@@ -1700,7 +1701,7 @@
     toggleSnap: () => ((prefs.snap = !prefs.snap), savePrefs(), updateToolbar()),
     toggleSnaplines: () => ((prefs.snaplines = !prefs.snaplines), savePrefs(), updateToolbar()),
     run() {
-      if (GC.runner.available && !GC.runner.ready) {
+      if (GC.runner.available && !GC.runner.ready && !selfInstalls()) {
         // F5 while the Run button is greyed out: say why, and let the user check again after installing.
         const cmds = GC.runner.info && GC.runner.info.gliderui ? 'Install-GLIServer' : 'Install-PSResource -Name GliderUI\nInstall-GLIServer';
         return modal(
@@ -1725,7 +1726,7 @@
       if (GC.runner.available) {
         const pr = problems();
         if (pr.length) toast(`Running with ${pr.length} problem${pr.length > 1 ? 's' : ''} - see the status bar`);
-        GC.runner.run(GC.genScript(project, { embed: false }));
+        GC.runner.run(GC.genScript(project, { embed: false }), selfInstalls());
         return;
       }
       const file = mainName() + '.ps1';
@@ -2094,6 +2095,7 @@
       GC.runner.ready ? GC.runner.show() : CMD.run();
     });
     GC.runner.init().then(() => {
+      runnerChecked = true;
       updateRunnerStatus();
       // While GliderUI is missing, check again when the user comes back to the page (e.g. after
       // running Install-GLIServer in a terminal) and every 15 seconds.
@@ -2202,6 +2204,10 @@
     return null;
   }
 
+  let runnerChecked = false; // set once the launcher has been asked
+  /** Does the generated script install GliderUI and its server itself (startup form setting)? */
+  const selfInstalls = () => (project.forms[0].form.props.GliderUISetup || 'InstallIfMissing') === 'InstallIfMissing';
+
   /** Status bar text for the local runner, and the Run button's enabled state. */
   function updateRunnerStatus() {
     const el = $('#stRunner');
@@ -2214,7 +2220,9 @@
       el.classList.add('off');
     } else if (!r.ready) {
       el.textContent = `⚠ ${i.gliderui ? 'GliderUI server not installed' : 'GliderUI not installed'}`;
-      el.title = r.problem + ' (click to check again)';
+      el.title = selfInstalls()
+        ? `${r.problem} - Run still works: the script installs it for the current user on its first run (startup form setting GliderUISetup = InstallIfMissing).`
+        : `${r.problem} (click to check again)`;
       el.classList.add('warn');
     } else {
       el.textContent = `▶ pwsh ${i.pwsh} · GliderUI ${i.gliderui}`;

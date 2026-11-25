@@ -40,6 +40,12 @@ Describe 'Generated script <Name>' -ForEach $script:scripts {
         [void][System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$null, [ref]$errors)
         ($errors | ForEach-Object { "line $($_.Extent.StartLineNumber): $($_.Message)" }) -join '; ' | Should -BeNullOrEmpty
     }
+    It 'makes sure GliderUI and its server are installed before importing (default GliderUISetup)' {
+        $text = Get-Content -LiteralPath $Path -Raw
+        $text | Should -Match '(?m)^Initialize-GliderUI -Install\s*$'
+        # the server must be installed before GliderUI is imported in this session
+        $text.IndexOf('Install-GLIServer -Scope CurrentUser') | Should -BeLessThan $text.IndexOf('Import-Module $module.Path -ErrorAction Stop')
+    }
     It 'loads the XAML and shows the window' {
         $text = Get-Content -LiteralPath $Path -Raw
         $text | Should -Match '\[AvaloniaRuntimeXamlLoader\]::Parse\('

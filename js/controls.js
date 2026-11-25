@@ -56,6 +56,11 @@
     P('CanMaximize', 'bool', true, 'Behavior'),
     P('Topmost', 'bool', false, 'Behavior'),
     P('ShowInTaskbar', 'bool', true, 'Behavior'),
+    P('GliderUISetup', 'enum', 'InstallIfMissing', 'Behavior', {
+      options: ['InstallIfMissing', 'CheckOnly', 'ImportOnly'],
+      noXaml: true,
+      hint: 'Startup form only. What the exported script does before it shows the window. InstallIfMissing: install GliderUI and its server for the current user if they are missing (no admin needed), then import it. CheckOnly: stop with a clear message if something is missing. ImportOnly: just Import-Module GliderUI.',
+    }),
     P('RequestedThemeVariant', 'enum', 'Default', 'Appearance', { options: ['Default', 'Light', 'Dark'] }),
     P('ExtendClientAreaToDecorationsHint', 'bool', false, 'Appearance', { hint: 'Draw the content under the title bar (no title text, caption buttons float on top). Height then includes the title bar area.' }),
     P('Background', 'color', '', 'Appearance'),

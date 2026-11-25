@@ -167,9 +167,11 @@ param (
                 '/api/ping' { return Send-Json $Context (Get-RunnerInfo) }
                 '/api/run' {
                     if ($req.HttpMethod -ne 'POST') { return Send-Json $Context @{ error = 'POST required' } 405 }
-                    $runner = Get-RunnerInfo
-                    if (-not $runner.ready) { return Send-Json $Context @{ error = $runner.problem } 409 }
                     $body = Read-Body $req | ConvertFrom-Json
+                    # Scripts generated with GliderUISetup = InstallIfMissing install GliderUI and its
+                    # server themselves on first run, so only refuse scripts that cannot.
+                    $runner = Get-RunnerInfo
+                    if (-not $runner.ready -and -not $body.installsGliderUI) { return Send-Json $Context @{ error = $runner.problem } 409 }
                     if (-not $body.script) { return Send-Json $Context @{ error = 'No script' } 400 }
                     return Send-Json $Context @{ id = (Start-Run $body.script) }
                 }
@@ -234,7 +236,10 @@ param (
     Write-Host "  GUI Creator is running at $url" -ForegroundColor Green
     $runnerInfo = Get-RunnerInfo
     Write-Host "  PowerShell $($runnerInfo.pwsh), GliderUI $(if ($runnerInfo.gliderui) { $runnerInfo.gliderui } else { 'not installed' }), server $(if ($runnerInfo.server) { $runnerInfo.server } else { 'not installed' })"
-    if (-not $runnerInfo.ready) { Write-Host "  Run (F5) is disabled until this is fixed: $($runnerInfo.problem)" -ForegroundColor Yellow }
+    if (-not $runnerInfo.ready) {
+        Write-Host "  $($runnerInfo.problem)" -ForegroundColor Yellow
+        Write-Host '  Designs with the default GliderUISetup (InstallIfMissing) install it on their first run; other designs cannot run until it is installed.' -ForegroundColor Yellow
+    }
     Write-Host '  Press Ctrl+C to stop.'
     Write-Host ''
     if (-not $NoBrowser) {

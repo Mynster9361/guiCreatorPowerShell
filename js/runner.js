@@ -132,15 +132,16 @@
       $('#outLines').replaceChildren();
     },
 
-    async run(script) {
+    /** installsGliderUI: the script installs GliderUI and its server itself if they are missing. */
+    async run(script, installsGliderUI) {
       clearTimeout(state.timer);
       state.script = script;
       this.show();
       this.clear();
       addLine('sys', `Running with PowerShell ${state.info.pwsh}${state.info.gliderui ? ', GliderUI ' + state.info.gliderui : ''} ...`);
-      if (!state.info.gliderui) addLine('err', 'GliderUI is not installed. Run: Install-PSResource -Name GliderUI; Install-GLIServer');
+      if (!state.info.ready) addLine(installsGliderUI ? 'sys' : 'err', installsGliderUI ? 'GliderUI or its server is missing; the script installs it for the current user first (this can take a minute).' : state.info.problem);
       try {
-        const r = await api('/api/run', { script });
+        const r = await api('/api/run', { script, installsGliderUI: !!installsGliderUI });
         state.runId = r.id;
         state.next = 0;
         state.running = true;
