@@ -157,6 +157,8 @@ Start GUI Creator through its local launcher instead of opening `index.html` dir
 pwsh -File .\Start-GuiCreator.ps1          # opens http://localhost:8765/ in your browser
 ```
 
+You can also start it from VS Code with the PowerShell extension (open the file and press F5). The launcher runs in its own scope, so it leaves nothing behind in the terminal session. It keeps running until you stop it with Ctrl+C, Shift+F5 or the stop button; when it stops, it prints whether it was stopped or which error ended it.
+
 - Press **F5** (or click **Run**) to run the current project with `pwsh`. The status bar shows the PowerShell and GliderUI versions it uses.
 - The **Output** panel shows the script's output and errors. In an error, click **line N** to jump to that line: in the right form's Script tab if the error is in your code, otherwise in the Generated Script tab.
 - Press **Shift+F5** (or click **Stop**) to stop the run. This also closes its windows and GliderUI server process.
