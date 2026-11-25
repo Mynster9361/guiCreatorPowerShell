@@ -133,7 +133,11 @@ param (
         $psi = [Diagnostics.ProcessStartInfo]::new($pwshPath)
         foreach ($a in '-NoProfile', '-NoLogo', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', $command) { $psi.ArgumentList.Add($a) }
         $psi.UseShellExecute = $false
-        $psi.CreateNoWindow = $true
+        # Share this launcher's console instead of running without one: sign-in prompts that use
+        # WAM (Connect-ExchangeOnline, Connect-MgGraph, ...) need a console window as their parent
+        # and fail with "A window handle must be configured" without it. Output is still
+        # redirected to the Output panel; Ctrl+C in this console also ends the run.
+        $psi.CreateNoWindow = $false
         $psi.RedirectStandardOutput = $true
         $psi.RedirectStandardError = $true
         $psi.StandardOutputEncoding = [Text.Encoding]::UTF8

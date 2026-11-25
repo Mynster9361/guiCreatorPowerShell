@@ -648,6 +648,15 @@ function Set-Status([string]$Text, [ValidateSet('Info', 'Ok', 'Error')][string]$
 
 function Get-CleanText([string]$Text) { ($Text -replace '\s+', ' ').Trim() }
 
+# Does this PowerShell have a console window? (WAM sign-in needs one as parent window.)
+function Test-ConsoleWindow {
+    if (-not $IsWindows) { return $true }
+    if (-not ('GuiCreator.ConsoleWindow' -as [type])) {
+        Add-Type -Namespace GuiCreator -Name ConsoleWindow -MemberDefinition '[DllImport("kernel32.dll")] public static extern System.IntPtr GetConsoleWindow();'
+    }
+    [GuiCreator.ConsoleWindow]::GetConsoleWindow() -ne [IntPtr]::Zero
+}
+
 function Test-ExoConnection {
     if (-not (Get-Command Get-ConnectionInformation -ErrorAction SilentlyContinue)) { return $false }
     [bool](Get-ConnectionInformation -ErrorAction SilentlyContinue | Where-Object State -EQ 'Connected')
@@ -811,7 +820,19 @@ $buttonConnect_Click = [EventCallback]@{
                 Import-Module ExchangeOnlineManagement -ErrorAction Stop
             }
             Set-Status 'Connecting... sign in with the window that opens.'
-            Connect-ExchangeOnline -ShowBanner:$false -ErrorAction Stop
+            # On Windows, sign-in uses WAM (the Windows account broker), which needs a console window
+            # as its parent. Started without one (e.g. from a hidden shortcut), sign in through the
+            # browser instead (-DisableWAM), and retry that way if WAM still asks for a window handle.
+            $connectArgs = @{ ShowBanner = $false; ErrorAction = 'Stop' }
+            $canDisableWam = (Get-Command Connect-ExchangeOnline).Parameters.ContainsKey('DisableWAM')
+            if ($canDisableWam -and -not (Test-ConsoleWindow)) { $connectArgs.DisableWAM = $true }
+            try {
+                Connect-ExchangeOnline @connectArgs
+            } catch {
+                if (-not $canDisableWam -or $connectArgs.DisableWAM -or $_.Exception.Message -notmatch 'window handle') { throw }
+                Set-Status 'Connecting... sign in with your browser.'
+                Connect-ExchangeOnline @connectArgs -DisableWAM
+            }
             Update-ConnectionStatus
             Set-Status 'Connected.' 'Ok'
         } catch {

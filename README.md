@@ -162,6 +162,7 @@ You can also start it from VS Code with the PowerShell extension (open the file 
 - Press **F5** (or click **Run**) to run the current project with `pwsh`. The status bar shows the PowerShell and GliderUI versions it uses.
 - The **Output** panel shows the script's output and errors. In an error, click **line N** to jump to that line: in the right form's Script tab if the error is in your code, otherwise in the Generated Script tab.
 - Press **Shift+F5** (or click **Stop**) to stop the run. This also closes its windows and GliderUI server process.
+- Runs share the launcher's console, just like running the exported script in a terminal. Sign-in prompts that use WAM, the Windows account broker (`Connect-ExchangeOnline`, `Connect-MgGraph`, …), need that console window as their parent. Without it they fail with "A window handle must be configured". Ctrl+C in the launcher's console also ends the run.
 
 How the launcher is protected:
 
