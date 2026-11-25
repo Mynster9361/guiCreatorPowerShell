@@ -374,3 +374,15 @@ kbd { font: 11px var(--mono); background: var(--bg3); border: 1px solid #50535b;
 .modal-body a:hover, .tour-body a:hover { color: #b5d1f5; }
 #statusbar .st-btn.warn { color: #ffe08a; }
 #toolbar .tb.run:disabled { background: #3a3d44; color: #8b8f98; opacity: 1; cursor: not-allowed; }
+
+/* ===== status bar: fixed layout, no jitter while moving the mouse =====
+   Digits get equal widths (tabular-nums) and the readouts that change on every mouse move get a
+   fixed width, so nothing to their left shifts. The message takes the remaining space. */
+#statusbar { font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+#statusbar > * { flex: none; }
+#statusbar > .spacer { display: none; }
+#stMsg { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#stSel, #stPos { overflow: hidden; text-overflow: ellipsis; }
+#stSel { width: 38ch; }
+#stPos { width: 16ch; }
+#stProblems { min-width: 13ch; text-align: left; }

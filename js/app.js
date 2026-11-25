@@ -1459,6 +1459,7 @@
   // ---------------------------------------------------------------- status / toolbar
   function status(msg) {
     $('#stMsg').textContent = msg;
+    $('#stMsg').title = msg; // full text when it is cut off
   }
   function renderStatus() {
     const n = nodeOf(selection[0]);
@@ -1468,6 +1469,7 @@
     else if (n && n.id !== 'menu') s = `${n.name}  X ${n.x}  Y ${n.y}  W ${n.w}  H ${n.h}`;
     else if (n) s = n.name;
     $('#stSel').textContent = s;
+    $('#stSel').title = s;
     const pr = problems();
     const b = $('#stProblems');
     b.textContent = pr.length ? `⚠ ${pr.length} problem${pr.length > 1 ? 's' : ''}` : '✓ No problems';
