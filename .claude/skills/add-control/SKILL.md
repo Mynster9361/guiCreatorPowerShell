@@ -9,7 +9,7 @@ A control lives in several places. Work through every step; a half-added control
 
 ## 1. Check that Avalonia/GliderUI really has it
 
-- Confirm the element name, the properties you want to expose and the event names in Avalonia 12 (GliderUI 0.5/0.6 wraps Avalonia 12). Prefer facts from GliderUI's examples or a quick real run (step 7) over memory. The `gliderui-researcher` agent can do this.
+- Confirm the element name, the properties you want to expose and the event names in Avalonia 12 (GliderUI 0.6+ wraps Avalonia 12.2 with the Fluent2 theme; generated scripts require 0.6.0). Prefer facts from GliderUI's examples or a quick real run (step 7) over memory. The `gliderui-researcher` agent can do this.
 - Events must exist as .NET events: GliderUI exposes them as `$ctl.Add<EventName>(...)`.
 
 ## 2. Define it in `js/controls.js` (`TYPES`)

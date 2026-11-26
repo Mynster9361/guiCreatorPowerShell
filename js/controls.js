@@ -306,7 +306,7 @@
       label: 'GroupBox', prefix: 'groupbox', size: [240, 170], container: true, textProp: 'Header', defaultEvent: 'PointerPressed',
       props: [P('Header', 'text', '', 'Common')],
       events: [],
-      render: (n, p) => `<div class="v-gb"><div class="hdr">${esc(p.Header)}</div><div class="body"><div class="slot" data-owner="${n.id}" data-slot="0"></div></div></div>`,
+      render: (n, p) => `<div class="v-gb${p.Header ? '' : ' no-hdr'}"><div class="hdr">${esc(p.Header)}</div><div class="body"><div class="slot" data-owner="${n.id}" data-slot="0"></div></div></div>`,
     },
     TabControl: {
       label: 'TabControl', prefix: 'tabcontrol', size: [360, 240], container: true, slotsProp: 'Tabs', valueProp: 'SelectedIndex', defaultEvent: 'SelectionChanged',

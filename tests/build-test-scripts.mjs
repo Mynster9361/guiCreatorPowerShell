@@ -81,7 +81,7 @@ form.slots[0] = Object.keys(GC.TYPES).map((type, i) => {
 });
 form.slots[0][0].events.Click = 'button1_Click';
 const allControls = {
-  version: 2, nextId: id, active: 0,
+  version: 2, layout: 2, nextId: id, active: 0,
   forms: [{
     uid: 'f1', form,
     menu: { id: 'menu', type: 'Menu', name: 'menuStrip1', props: { Items: '_File\n    _Open\n    -\n    E_xit' }, events: { menuFileExit: 'menuFileExit_Click' } },
@@ -101,6 +101,94 @@ write('all-controls.xaml', GC.genXaml(allControls.forms[0]));
     check(!/\b(HorizontalAlignment|VerticalAlignment|Margin|Width|Height)=/.test(lines[at]), `all-controls: the TabControl carries layout attributes: ${lines[at].trim()}`);
     check(/^\s*<Panel HorizontalAlignment="[^"]+" VerticalAlignment="[^"]+" Margin=/.test(lines[at - 1]), `all-controls: the TabControl is not wrapped in a layout Panel: ${lines[at - 1].trim()}`);
   }
+}
+
+// ---------------------------------------------------------------- container sizes (Fluent2)
+// Measured with UI Automation in real GliderUI 0.6.0 windows (270x220 containers): GroupBox content
+// at 13,45 with 13px insets (13,25 without a Header), TabControl content at 0,41.
+for (const [label, n, want] of [
+  ['GroupBox with Header', { type: 'GroupBox', w: 270, h: 220, props: { Header: 'Group' } }, [244, 162]],
+  ['GroupBox without Header', { type: 'GroupBox', w: 270, h: 220, props: { Header: '' } }, [244, 182]],
+  ['TabControl', { type: 'TabControl', w: 270, h: 220, props: {} }, [270, 179]],
+]) {
+  const got = GC.slotSize(n);
+  check(got[0] === want[0] && got[1] === want[1], `slotSize(${label}) is ${got}, measured ${want}`);
+}
+
+// ---------------------------------------------------------------- layout upgrade (Fluent -> Fluent2)
+// Designs made with the old container sizes (no `layout: 2`) must generate exactly the same XAML
+// after GC.upgradeLayout as before it, with the old GC.slotSize.
+{
+  const newSlotSize = GC.slotSize;
+  const oldSlotSize = (owner, doc) =>
+    owner.type === 'GroupBox' ? [owner.w - 18, owner.h - 42] : owner.type === 'TabControl' ? [owner.w, owner.h - 48] : newSlotSize(owner, doc);
+  const xamlOf = (p, slotSize) => {
+    GC.slotSize = slotSize;
+    try {
+      return GC.formsOf(p).map((d) => GC.genXaml(d)).join('\n');
+    } finally {
+      GC.slotSize = newSlotSize;
+    }
+  };
+  const compare = (label, build) => {
+    const before = xamlOf(build(), oldSlotSize);
+    const upgraded = GC.upgradeLayout(build());
+    check(upgraded.layout === 2, `${label}: upgradeLayout did not set layout: 2`);
+    const after = xamlOf(upgraded, newSlotSize);
+    const again = xamlOf(GC.upgradeLayout(upgraded), newSlotSize);
+    if (before !== after) {
+      const a = before.split('\n');
+      const b = after.split('\n');
+      const i = a.findIndex((l, k) => l !== b[k]);
+      failures.push(`${label}: XAML changed by the layout upgrade:\n    before: ${(a[i] || '').trim()}\n    after:  ${(b[i] || '').trim()}`);
+    }
+    check(again === after, `${label}: upgradeLayout is not idempotent`);
+  };
+  const noUpgrade = GC.upgradeLayout;
+  for (const e of GC.EXAMPLES) {
+    // build() must return the upgraded design (the app, export-example.mjs and these tests use it)
+    check(e.build().layout === 2, `example ${e.name}: build() does not return an upgraded layout (layout: 2)`);
+    GC.upgradeLayout = (p) => p; // ex.build() upgrades; get the original design
+    let raw;
+    try {
+      raw = e.build();
+    } finally {
+      GC.upgradeLayout = noUpgrade;
+    }
+    const json = JSON.stringify(raw);
+    compare(`example ${e.name}`, () => JSON.parse(json));
+  }
+  // Every anchor combination inside each container, plus a GroupBox nested in a tab.
+  const combos = [];
+  for (const v of ['Top', 'Bottom', 'Top, Bottom', '']) for (const h of ['Left', 'Right', 'Left, Right', '']) combos.push([v, h].filter(Boolean).join(', ') || 'None');
+  const sized = (type, name, x, y, w, h, props) => {
+    const n = mk(type, name, x, y, {});
+    Object.assign(n.props, props);
+    return Object.assign(n, { w, h });
+  };
+  const fill = (owner, slot = 0) => {
+    owner.slots[slot] = combos.map((anchor, i) => sized('Button', `${owner.name}_b${slot}_${i}`, 6 + (i % 4) * 30, 6 + Math.floor(i / 4) * 20, 30, 30, { Anchor: anchor }));
+    // 30x30 so that no stretched child hits upgradeLayout's minimum size of 8 (which, by design,
+    // changes the margins of children that would otherwise get a size of 8 or less)
+    return owner;
+  };
+  const synthetic = () => {
+    id = 1000;
+    const f = { id: 'form', type: 'Window', name: 'formLayout', props: {}, events: {}, slots: [[]] };
+    GC.FORM_PROPS.forEach((p) => (f.props[p.key] = p.def));
+    const gb = fill(sized('GroupBox', 'gbHeader', 10, 10, 300, 220, { Header: 'Header' }));
+    const gb0 = fill(sized('GroupBox', 'gbNoHeader', 320, 10, 300, 220, { Header: '' }));
+    const tc = fill(sized('TabControl', 'tcTabs', 10, 240, 330, 260, { Anchor: 'Top, Bottom, Left, Right' }));
+    tc.slots[1] = [fill(sized('GroupBox', 'gbNested', 5, 5, 300, 200, { Header: 'In a tab', Anchor: 'Top, Bottom, Left, Right' }))];
+    f.slots[0] = [gb, gb0, tc];
+    return { version: 2, nextId: id, active: 0, forms: [{ uid: 'f1', form: f, menu: null, script: '' }] };
+  };
+  const json = JSON.stringify(synthetic());
+  const xaml = xamlOf(JSON.parse(json), newSlotSize);
+  check((xaml.match(/<Button /g) || []).length === combos.length * 4, 'synthetic layout form: not every test button was generated');
+  check(/gbNoHeader"[^>]*>/.test(xaml) && !/gbNoHeader"[^>]*Header=/.test(xaml), 'synthetic layout form: the no-header GroupBox has a Header');
+  check(combos.every((c) => c === 'None' || xaml.includes(`HorizontalAlignment="${/Left, Right/.test(c) ? 'Stretch' : /Right/.test(c) ? 'Right' : /Left/.test(c) ? 'Left' : 'Center'}"`)), 'synthetic layout form: anchors were not applied');
+  compare('every anchor in GroupBox/TabControl', () => JSON.parse(json));
 }
 
 // ---------------------------------------------------------------- snippets

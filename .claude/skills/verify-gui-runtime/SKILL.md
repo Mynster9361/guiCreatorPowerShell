@@ -7,6 +7,14 @@ description: Run GUI Creator generated scripts against real GliderUI on Windows 
 
 CI checks syntax only. Anything that touches `js/codegen.js`, `js/controls.js`, `js/examples.js`, `js/snippets.js` or `Start-GuiCreator.ps1` should be run for real on Windows with GliderUI installed. Windows will briefly appear on the developer's screen; that is expected.
 
+**GliderUI version:** generated scripts need GliderUI 0.6.0+, and with the default GliderUISetup they **install or update it into the user's profile** when it is missing or older. If the machine still has an older GliderUI, don't let a test do that. Save 0.6.0 to a temp folder and put it first on `PSModulePath` for the test processes:
+
+```powershell
+$mods = Join-Path $env:TEMP 'gc-gliderui-modules'
+Save-PSResource -Name GliderUI, GliderUI.Server.win-x64 -Version 0.6.0 -Path $mods -Repository PSGallery -TrustRepository
+$env:PSModulePath = $mods + [IO.Path]::PathSeparator + $env:PSModulePath   # child processes inherit it
+```
+
 ## Smoke test: show, check every control, close
 
 ```powershell

@@ -927,4 +927,11 @@ $buttonCancel_Click = {
       },
     },
   ];
+
+  // The examples were laid out with the Fluent (GliderUI 0.5) container sizes; upgradeLayout keeps
+  // their generated margins with the Fluent2 sizes. Applied to every entry, however it is declared.
+  GC.EXAMPLES.forEach((e) => {
+    const build = e.build;
+    e.build = () => GC.upgradeLayout(build());
+  });
 })();

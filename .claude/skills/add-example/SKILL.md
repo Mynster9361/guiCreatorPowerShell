@@ -41,7 +41,8 @@ $buttonGo_Click = {
 ```
 
 - `ctl(type, name, x, y, w, h, props, { events, children, slots })`; `project(formName, formProps, controls, script, formEvents)`; `multi(...projects)` (first = startup form).
-- Positions are in the parent's coordinates. GroupBox inner size is w−18 × h−42; TabControl content is h−48.
+- Positions are in the parent's coordinates. With the Fluent2 sizes (GliderUI 0.6+), GroupBox content is w−26 × h−58 (h−38 without a Header) and TabControl content is h−41.
+- **Mark a new example as Fluent2 layout:** the existing examples were laid out with the old sizes, so every `build()` runs `GC.upgradeLayout`. Return `Object.assign(project(...), { layout: 2 })` (or set `layout: 2` on the `multi(...)` result) so a new example's positions are used as written. Without it, children of GroupBoxes and TabControls are shifted.
 - Credit ported third-party code in the script header (`credit('<GliderUI example file>')` exists for GliderUI's examples).
 
 ## 3. PowerShell inside `String.raw` - rules

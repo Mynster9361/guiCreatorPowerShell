@@ -129,7 +129,7 @@
     return d;
   }
   function blankProject() {
-    const p = { version: 2, nextId: 1, nextForm: 2, active: 0, forms: [blankDoc('formMain', 'f1')] };
+    const p = { version: 2, layout: 2, nextId: 1, nextForm: 2, active: 0, forms: [blankDoc('formMain', 'f1')] };
     p.forms[0].form.props.Title = 'My GliderUI Form';
     return p;
   }
@@ -305,7 +305,7 @@
   /** Fill in defaults for anything missing (older or hand-edited project files). */
   function normalize(p) {
     // Version 1 projects (and examples) have a single form at the top level.
-    if (p && !p.forms && p.form) p = { version: 2, nextId: p.nextId, active: 0, forms: [{ uid: 'f1', form: p.form, menu: p.menu, script: p.script }] };
+    if (p && !p.forms && p.form) p = { version: 2, layout: p.layout, nextId: p.nextId, active: 0, forms: [{ uid: 'f1', form: p.form, menu: p.menu, script: p.script }] };
     if (!p || !Array.isArray(p.forms) || !p.forms.length) throw new Error('This file is not a GUI Creator project.');
     let maxId = 0;
     let maxUid = 0;
@@ -316,7 +316,8 @@
       maxId = Math.max(maxId, normalizeDoc(d));
     });
     p.version = 2;
-    p.active = Math.min(Math.max(0, p.active | 0), p.forms.length - 1);
+    GC.upgradeLayout(p); // designs from before the Fluent2 container sizes keep their margins
+    p.active =Math.min(Math.max(0, p.active | 0), p.forms.length - 1);
     p.nextId = Math.max(p.nextId || 1, maxId + 1);
     p.nextForm = Math.max(p.nextForm || 1, maxUid + 1);
     return p;
@@ -2219,9 +2220,9 @@
       el.title = 'Runner offline: click to see how to run your GUI (get GUI Creator from GitHub and start Start-GuiCreator.ps1, then F5 runs your design)';
       el.classList.add('off');
     } else if (!r.ready) {
-      el.textContent = `⚠ ${i.gliderui ? 'GliderUI server not installed' : 'GliderUI not installed'}`;
+      el.textContent = `⚠ ${i.outdated ? `GliderUI ${i.gliderui} is too old (needs ${GC.GLIDERUI_MIN}+)` : i.gliderui ? 'GliderUI server not installed' : 'GliderUI not installed'}`;
       el.title = selfInstalls()
-        ? `${r.problem} - Run still works: the script installs it for the current user on its first run (startup form setting GliderUISetup = InstallIfMissing).`
+        ? `${r.problem} - Run still works: the script installs or updates it for the current user on its first run (startup form setting GliderUISetup = InstallIfMissing).`
         : `${r.problem} (click to check again)`;
       el.classList.add('warn');
     } else {

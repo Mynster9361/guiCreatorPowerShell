@@ -20,17 +20,20 @@ using namespace GliderUI.Avalonia.Markup.Xaml
 function Initialize-GliderUI {
     <#
     .SYNOPSIS
-        Makes sure GliderUI and its server are installed, then imports GliderUI.
+        Makes sure GliderUI 0.6.0 or later and its server are installed, then imports GliderUI.
     .PARAMETER Install
-        Install what is missing for the current user (no admin needed) instead of stopping.
+        Install or update what is missing for the current user (no admin needed) instead of stopping.
     #>
     param ([switch]$Install)
-    $findModule = { Get-Module -ListAvailable -Name GliderUI | Sort-Object Version -Descending | Select-Object -First 1 }
+    $minimum = [version]'0.6.0'   # the layout was designed for its Fluent2 theme
+    $findModule = { Get-Module -ListAvailable -Name GliderUI | Where-Object Version -GE $minimum | Sort-Object Version -Descending | Select-Object -First 1 }
     $module = & $findModule
     if (-not $module) {
-        if (-not $Install) { throw 'GliderUI is not installed. Run: Install-PSResource -Name GliderUI; Install-GLIServer' }
-        Write-Host 'GliderUI is not installed. Installing it for the current user (first run only)...'
-        Install-PSResource -Name GliderUI -Scope CurrentUser -TrustRepository -ErrorAction Stop
+        $old = Get-Module -ListAvailable -Name GliderUI | Sort-Object Version -Descending | Select-Object -First 1
+        $why = if ($old) { "GliderUI $($old.Version) is installed, but this script needs $minimum or later." } else { 'GliderUI is not installed.' }
+        if (-not $Install) { throw "$why Run: Install-PSResource -Name GliderUI; Install-GLIServer" }
+        Write-Host "$why Installing the latest GliderUI for the current user..."
+        Install-PSResource -Name GliderUI -Version "[$minimum,)" -Scope CurrentUser -TrustRepository -ErrorAction Stop
         $module = & $findModule
         if (-not $module) { throw 'GliderUI could not be installed.' }
     }
@@ -45,7 +48,11 @@ function Initialize-GliderUI {
         & $pwsh -NoProfile -NonInteractive -Command "`$WarningPreference = 'SilentlyContinue'; Import-Module '$($module.Path)'; Install-GLIServer -Scope CurrentUser -TrustRepository -ErrorAction Stop | Out-Null"
         if ($LASTEXITCODE) { throw 'The GliderUI server could not be installed. Run: Install-GLIServer' }
     }
-    if (-not (Get-Module GliderUI)) {
+    $loaded = Get-Module GliderUI
+    if ($loaded -and $loaded.Version -lt $minimum) {
+        throw "GliderUI $($loaded.Version) is already loaded in this PowerShell session. Start a new session to use $minimum or later."
+    }
+    if (-not $loaded) {
         Import-Module $module.Path -ErrorAction Stop
     }
 }
@@ -598,7 +605,7 @@ Q2FsZW5kYXI6IiwiSXNDaGVja2VkIjpmYWxzZSwiSXNUaHJlZVN0YXRlIjpmYWxzZSwiQmFja2dyb3Vu
 bmQiOiIiLCJGb250RmFtaWx5IjoiIiwiRm9udFNpemUiOiIiLCJGb250V2VpZ2h0IjoiTm9ybWFsIiwiRm9udFN0eWxlIjoiTm9y
 bWFsIiwiT3BhY2l0eSI6MSwiQ2xhc3NlcyI6IiIsIklzRW5hYmxlZCI6dHJ1ZSwiSXNWaXNpYmxlIjp0cnVlLCJUb29sVGlwIjoi
 IiwiQ3Vyc29yIjoiIiwiVGFnIjoiIn0sImV2ZW50cyI6e319LHsiaWQiOiJjMTQiLCJ0eXBlIjoiQ29tYm9Cb3giLCJuYW1lIjoi
-Y29tYm9ib3hDYWxlbmRhclJpZ2h0cyIsIngiOjE0NCwieSI6MTA4LCJ3IjoxOTYsImgiOjMyLCJwcm9wcyI6eyJJdGVtcyI6IlJl
+Y29tYm9ib3hDYWxlbmRhclJpZ2h0cyIsIngiOjE0NCwieSI6MTA4LCJ3IjoxODgsImgiOjMyLCJwcm9wcyI6eyJJdGVtcyI6IlJl
 dmlld2VyXG5FZGl0b3Jcbk93bmVyXG5BdmFpbGFiaWxpdHlPbmx5XG5MaW1pdGVkRGV0YWlsc1xuQXV0aG9yXG5Db250cmlidXRv
 clxuTm9uRWRpdGluZ0F1dGhvclxuUHVibGlzaGluZ0VkaXRvclxuUHVibGlzaGluZ0F1dGhvclxuTm9uZSIsIlNlbGVjdGVkSW5k
 ZXgiOjAsIlBsYWNlaG9sZGVyVGV4dCI6IiIsIkJhY2tncm91bmQiOiIiLCJGb3JlZ3JvdW5kIjoiIiwiRm9udEZhbWlseSI6IiIs
@@ -882,5 +889,5 @@ aGFuZ2VBY2Nlc3M6XG4jICAgICAkYW5zd2VyID0gU2hvdy1mb3JtQ29uZmlybSAtT3duZXIgJGZvcm1F
 VmFsdWVzIEB7IGxhYmVsTWVzc2FnZSA9ICdSZW1vdmUgLi4uPycgfVxuIyAgICAgaWYgKCRhbnN3ZXIuRGlhbG9nUmVzdWx0IC1l
 cSAnT0snKSB7IC4uLiB9XG5cbiRidXR0b25PS19DbGljayA9IHtcbiAgICBwYXJhbSAoJGFyZ3VtZW50TGlzdCwgJHMsICRlKVxu
 ICAgIENsb3NlLURpYWxvZyAnT0snXG59XG5cbiRidXR0b25DYW5jZWxfQ2xpY2sgPSB7XG4gICAgcGFyYW0gKCRhcmd1bWVudExp
-c3QsICRzLCAkZSlcbiAgICBDbG9zZS1EaWFsb2cgJ0NhbmNlbCdcbn1cbiJ9XX0=
+c3QsICRzLCAkZSlcbiAgICBDbG9zZS1EaWFsb2cgJ0NhbmNlbCdcbn1cbiJ9XSwibGF5b3V0IjoyfQ==
 #>

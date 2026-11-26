@@ -23,7 +23,9 @@ You review changes in the GUI Creator repo that affect **what gets generated or 
 - Here-strings: the closing `'@` must stay at column 0; user content must not start a line with `'@`.
 
 **Layout and XAML**
-- `GC.slotSize()` must match the CSS container sizes (GroupBox w−18 × h−42, TabControl h−48, Menu 32). Anchor margins depend on it.
+- `GC.slotSize()` must match the CSS container sizes and GliderUI 0.6's Fluent2 theme (GroupBox w−26 × h−58, or h−38 without a Header; TabControl h−41; Menu 32). Anchor margins depend on it.
+- Changing container sizes needs a `layout` bump and a `GC.upgradeLayout` step, so old designs keep their margins (`build-test-scripts.mjs` checks this).
+- A TabControl's layout attributes must stay on its wrapping `<Panel>`.
 - XAML attribute values go through `GC.xattr`. Defaults are only omitted when they equal Avalonia's real default.
 - Properties needed after items exist (`SelectedIndex`) are `post` properties, not XAML attributes.
 

@@ -45,13 +45,19 @@ param (
     # server is never running beforehand; what matters is that the GliderUI module and the server
     # package of the *same version* (Install-GLIServer) are installed. Checked on every request
     # (~25 ms), so installing them while GUI Creator is open is picked up without a restart.
+    # Generated scripts need this GliderUI version or later (its Fluent2 theme matches the designer's
+    # layout). Keep it the same as GC.GLIDERUI_MIN in js/codegen.js.
+    $minimumGliderUI = [version]'0.6.0'
     function Get-RunnerInfo {
         $module = Get-Module -ListAvailable -Name GliderUI | Sort-Object Version -Descending | Select-Object -First 1
         $server = if ($module) {
             Get-Module -ListAvailable -Name 'GliderUI.Server.*' | Where-Object Version -EQ $module.Version | Select-Object -First 1
         }
+        $outdated = $module -and $module.Version -lt $minimumGliderUI
         $problem = if (-not $module) {
             'GliderUI is not installed. Run: Install-PSResource -Name GliderUI; Install-GLIServer'
+        } elseif ($outdated) {
+            "GliderUI $($module.Version) is installed, but GUI Creator scripts need $minimumGliderUI or later. Run: Install-PSResource -Name GliderUI; Install-GLIServer"
         } elseif (-not $server) {
             "The GliderUI server for GliderUI $($module.Version) is not installed. Run: Install-GLIServer"
         }
@@ -59,6 +65,7 @@ param (
             ok       = $true
             pwsh     = $PSVersionTable.PSVersion.ToString()
             gliderui = if ($module) { $module.Version.ToString() } else { $null }
+            outdated = [bool]$outdated
             server   = if ($server) { $server.Name + ' ' + $server.Version } else { $null }
             ready    = -not $problem
             problem  = $problem

@@ -4,7 +4,8 @@ A browser-based PowerShell GUI designer (in the style of SAPIEN PowerShell Studi
 
 - Live site: https://guicreator.mynster-it.dk (GitHub Pages; every push to `main` deploys it)
 - Repo: https://github.com/Mynster9361/guiCreatorPowerShell (public)
-- The developer's machine is Windows 11 with PowerShell 7.6 and GliderUI 0.5.0 installed. GliderUI 0.6.0 is also verified to work.
+- Generated scripts need **GliderUI 0.6.0+** (Fluent2 theme): `Initialize-GliderUI` installs or updates it. The minimum lives in `GC.GLIDERUI_MIN` (codegen.js) and `$minimumGliderUI` (Start-GuiCreator.ps1); keep them equal.
+- The developer's machine is Windows 11 with PowerShell 7.6. Its installed GliderUI may still be 0.5.0: for tests, put a saved 0.6.0 (`Save-PSResource` into a temp folder) first on `PSModulePath`, or a test run will really install 0.6.0 into the profile.
 
 ## Layout
 
@@ -44,10 +45,11 @@ A browser-based PowerShell GUI designer (in the style of SAPIEN PowerShell Studi
   8. `Add<Event>` wiring,
   9. `Show()` and `WaitForClosed()`,
   10. the base64 project in a `<# GUICREATOR-PROJECT #>` comment. It is base64 because `#>` in user code would end a plain comment.
-- **Layout:** controls are placed in a `Grid` using Margin and alignment derived from **Anchor**. `GC.slotSize()` must match the CSS of the containers:
-  - GroupBox: header 24px, body padding 8 and border 1, so the inner size is w−18 × h−42;
-  - TabControl: tab strip 48;
-  - Menu: 32.
+- **Layout:** controls are placed in a `Grid` using Margin and alignment derived from **Anchor**. `GC.slotSize()` must match the CSS of the containers and GliderUI 0.6's Fluent2 theme (measured with UI Automation; `build-test-scripts.mjs` pins the values):
+  - GroupBox: border 1 + padding 12, a 20px header and a 12px gap, so content starts at 13,45 and is w−26 × h−58; with no Header it starts at 13,25 and is w−26 × h−38;
+  - TabControl: tab strip 41;
+  - Menu: 32 (written into the XAML).
+- **Layout upgrade:** projects without `layout: 2` were designed with the old Fluent sizes (GroupBox w−18 × h−42, tab strip 48). `GC.upgradeLayout()` moves or resizes their GroupBox/TabControl children so every generated Margin stays the same. `normalize()` and every `GC.EXAMPLES[].build()` call it. If container sizes change again, bump `layout` and extend the upgrade the same way.
 
   A TabControl's layout attributes go on a wrapping `<Panel>`, not on the TabControl. Its template (Fluent and Fluent2) copies `HorizontalAlignment`/`VerticalAlignment` onto its inner Border, so a Left/Top-aligned TabControl shrinks its tab content to the size of the tab headers, and Bottom/Right anchors inside a tab break.
 
@@ -71,6 +73,8 @@ pwsh -File ./Start-GuiCreator.ps1                               # run the app lo
 CI only parses scripts. Real behaviour needs Windows with GliderUI: see the `verify-gui-runtime` and `test-designer-ui` skills.
 
 ## Verified GliderUI facts (0.5.0 / 0.6.0)
+
+- 0.6.0 switched the server to Avalonia 12.2's **Fluent2** theme (`<Fluent2Theme />`); the DataGrid still uses the old Fluent styles.
 
 - The generated pattern is `[AvaloniaRuntimeXamlLoader]::Parse($xaml, $null)`, then `$win.FindControl('name')`, then `$ctl.Add<Event>($handler)`. Handlers are script blocks or `[EventCallback]@{...}` with `param ($argumentList, $s, $e)`.
 - **Main-runspace callbacks only run while the script is inside `WaitForClosed()`.** Never block before it. A nested `$dialog.WaitForClosed()` inside a handler works; that is how the modal `Show-<form>` dialogs work.

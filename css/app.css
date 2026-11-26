@@ -100,12 +100,14 @@ code { font-family: var(--mono); font-size: 12px; background: var(--bg3); paddin
 .fw {
   --bg: #ffffff; --fg: #1b1b1b; --sub: #6e6e6e; --ctl: rgba(0, 0, 0, .06); --ctl2: #ffffff; --bdr: rgba(0, 0, 0, .18); --bdr2: rgba(0, 0, 0, .45);
   --acc: #0078d4; --acc-fg: #fff; --sel: rgba(0, 0, 0, .07); --dot: rgba(0, 0, 0, .22); --title: #f3f3f3;
+  --card: rgba(255, 255, 255, .7); --card-bdr: rgba(0, 0, 0, .1);
   position: relative; box-shadow: 0 12px 40px rgba(0, 0, 0, .55), 0 0 0 1px rgba(0, 0, 0, .6); border-radius: 8px; overflow: visible;
   font: 14px/1.3 'Segoe UI', 'Inter', system-ui, sans-serif; color: var(--fg);
 }
 .fw.dark {
   --bg: #202020; --fg: #ffffff; --sub: #a5a5a5; --ctl: rgba(255, 255, 255, .08); --ctl2: rgba(255, 255, 255, .05); --bdr: rgba(255, 255, 255, .14); --bdr2: rgba(255, 255, 255, .55);
   --acc: #60cdff; --acc-fg: #000; --sel: rgba(255, 255, 255, .08); --dot: rgba(255, 255, 255, .18); --title: #2b2b2b;
+  --card: rgba(255, 255, 255, .05); --card-bdr: rgba(255, 255, 255, .08);
 }
 .fw-title { height: 32px; display: flex; align-items: center; background: var(--title); border-radius: 8px 8px 0 0; color: var(--fg); font-size: 12px; padding-left: 12px; gap: 8px; }
 .fw-title .ico { width: 16px; height: 16px; border-radius: 3px; background: linear-gradient(135deg, #2b6fd6, #1b4fa0); }
@@ -197,15 +199,18 @@ code { font-family: var(--mono); font-size: 12px; background: var(--bg3); paddin
 .v-dg .body { flex: 1; background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--sel) 31px 32px); }
 .v-border { background: var(--ubg, transparent); display: flex; overflow: hidden; }
 .v-border > .slot { flex: 1; }
-.v-gb { display: flex; flex-direction: column; background: var(--ubg, transparent); }
-.v-gb .hdr { height: 24px; line-height: 18px; box-sizing: border-box; padding: 0 2px 6px; font-weight: 600; white-space: pre; overflow: hidden; flex: none; }
-.v-gb .body { flex: 1; display: flex; border: 1px solid var(--bdr); border-radius: 6px; padding: 8px; min-height: 0; }
+/* GroupBox and TabControl follow GliderUI 0.6's Fluent2 theme. Their content areas must match
+   GC.slotSize() in js/codegen.js: GroupBox content at 13,45 (13,25 without a header) with 13px
+   insets; TabControl content below a 41px tab strip. */
+.v-gb { display: flex; flex-direction: column; border: 1px solid var(--card-bdr); border-radius: 4px; padding: 12px; background: var(--ubg, var(--card)); }
+.v-gb .hdr { height: 20px; line-height: 20px; margin-bottom: 12px; font-size: 16px; font-weight: 600; white-space: pre; overflow: hidden; flex: none; }
+.v-gb.no-hdr .hdr { height: 0; }
+.v-gb .body { flex: 1; display: flex; min-height: 0; }
 .v-gb .body > .slot, .v-tc .body > .slot { flex: 1; }
 .v-tc { display: flex; flex-direction: column; background: var(--ubg, transparent); }
-.v-tc .strip { display: flex; flex: none; height: 48px; overflow: hidden; }
-.v-tc .tab-hdr { padding: 0 12px; display: flex; align-items: center; font-size: 20px; color: var(--sub); cursor: pointer; white-space: nowrap; position: relative; }
-.v-tc .tab-hdr.on { color: var(--fg); }
-.v-tc .tab-hdr.on::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 6px; height: 3px; border-radius: 2px; background: var(--acc); }
+.v-tc .strip { display: flex; flex: none; height: 41px; overflow: hidden; }
+.v-tc .tab-hdr { padding: 0 12px 2px; display: flex; align-items: center; font-size: 14px; color: var(--fg); cursor: pointer; white-space: nowrap; position: relative; }
+.v-tc .tab-hdr.on::after { content: ''; position: absolute; left: 50%; width: 16px; margin-left: -8px; bottom: 5px; height: 3px; border-radius: 2px; background: var(--acc); }
 .v-tc .body { flex: 1; display: flex; min-height: 0; }
 .ctl .slot { outline: 1px dashed transparent; }
 .fw .ctl .slot:empty { outline-color: var(--bdr); }

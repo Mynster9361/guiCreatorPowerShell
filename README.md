@@ -182,7 +182,7 @@ pwsh -File .\formMain.ps1
 
 That's all you need on a machine with PowerShell 7.4+. By default, an exported script checks first whether GliderUI and its matching server are installed:
 
-- If GliderUI is missing, it installs it for the current user with `Install-PSResource -Name GliderUI -Scope CurrentUser`. No admin rights are needed.
+- If GliderUI is missing, or older than 0.6.0, it installs the latest version for the current user with `Install-PSResource -Name GliderUI -Scope CurrentUser`. No admin rights are needed. 0.6.0 is the minimum because the designer lays out GroupBoxes and TabControls for its Fluent2 theme.
 - If the server is missing, it runs `Install-GLIServer`. This happens in a separate `pwsh`, because GliderUI only finds a server that already existed when the module was imported.
 - Then it imports GliderUI.
 
@@ -190,15 +190,15 @@ The first run takes a little longer (about 15 seconds when nothing was installed
 
 You can change this with the **GliderUISetup** property of the startup form:
 
-| GliderUISetup | When GliderUI or its server is missing |
+| GliderUISetup | When GliderUI or its server is missing (or GliderUI is older than 0.6.0) |
 | --- | --- |
-| **InstallIfMissing** (default) | installs it for the current user, then runs |
+| **InstallIfMissing** (default) | installs or updates it for the current user, then runs |
 | **CheckOnly** | stops with a message that names the command to run |
-| **ImportOnly** | plain `Import-Module GliderUI`, as in the GliderUI examples |
+| **ImportOnly** | plain `Import-Module GliderUI`, as in the GliderUI examples (no version check) |
 
 With the local launcher, Run stays available when the server is missing as long as the design uses InstallIfMissing. The Output panel shows the installation.
 
-Tested with GliderUI 0.5.0 and 0.6.0 (Avalonia 12) on PowerShell 7.6, Windows 11. To install GliderUI yourself instead: `Install-PSResource -Name GliderUI`, then `Install-GLIServer` (add `-TrustRepository` in a non-interactive session).
+Needs GliderUI 0.6.0 or later (Avalonia 12.2, Fluent2 theme); tested with 0.6.0 on PowerShell 7.6, Windows 11. Designs saved with an older GUI Creator are updated when you open them, so their controls keep the same margins. To install GliderUI yourself instead: `Install-PSResource -Name GliderUI`, then `Install-GLIServer` (add `-TrustRepository` in a non-interactive session).
 
 ## How the generated script works
 
@@ -246,7 +246,7 @@ The hosted page works like a locally opened `index.html`: you can design, use th
 
 ## Notes
 
-- The designer preview approximates Avalonia's Fluent theme, so sizes can differ slightly when the script runs.
+- The designer preview approximates GliderUI's Fluent2 theme. GroupBox and TabControl content areas match it exactly (measured in real windows); other controls can differ slightly in look when the script runs.
 - Property and event names follow Avalonia (for example `Content`, `IsChecked`, `SelectionChanged`). To add a control or property, add an entry to `TYPES` in `js/controls.js`.
 
 ## Credits
