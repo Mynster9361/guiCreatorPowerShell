@@ -42,7 +42,9 @@ try {
 }
 '@
 if (-not $run.WaitForExit(30000)) { $run.Kill($true); 'TIMEOUT: killed the test process tree' }
-Get-Content $out; Remove-Item $out
+Get-Content $out
+# Killed children release the log a moment later, so retry briefly.
+foreach ($i in 1..10) { try { Remove-Item $out -ErrorAction Stop; break } catch { Start-Sleep -Milliseconds 500 } }
 ```
 
 - If the run had to be killed, `Test-GeneratedScript`'s `finally` did not run, so its copy `%TEMP%\gc-test-<id>.ps1` is left behind. Remove `gc-test-*.ps1` files that no running process uses.
