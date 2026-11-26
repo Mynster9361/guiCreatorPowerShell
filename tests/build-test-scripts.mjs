@@ -103,6 +103,14 @@ write('all-controls.xaml', GC.genXaml(allControls.forms[0]));
   }
 }
 
+// Values whose Avalonia default differs from what the designer draws are always written: Button
+// content is Left/Top in Avalonia (the designer centers it), and TimePicker follows the culture.
+{
+  const xaml = GC.genXaml(allControls.forms[0]);
+  check(/<Button x:Name="button1"[^>]*HorizontalContentAlignment="Center"[^>]*VerticalContentAlignment="Center"/.test(xaml), 'all-controls: Button content alignment is not written');
+  check(/<TimePicker [^>]*ClockIdentifier="12HourClock"/.test(xaml), 'all-controls: TimePicker ClockIdentifier is not written');
+}
+
 // ---------------------------------------------------------------- container sizes (Fluent2)
 // Measured with UI Automation in real GliderUI 0.6.0 windows (270x220 containers): GroupBox content
 // at 13,45 with 13px insets (13,25 without a Header), TabControl content at 0,41.

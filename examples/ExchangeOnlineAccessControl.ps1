@@ -90,8 +90,8 @@ function Show-formConfirm {
         ShowInTaskbar="False">
     <Grid>
         <TextBlock x:Name="labelMessage" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,20,0,0" Width="400" Height="110" Text="Are you sure?" TextWrapping="Wrap" />
-        <Button x:Name="buttonOK" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="228,158,0,0" Width="104" Height="32" Content="Continue" IsDefault="True" Classes="accent" />
-        <Button x:Name="buttonCancel" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="340,158,0,0" Width="80" Height="32" Content="Cancel" IsCancel="True" />
+        <Button x:Name="buttonOK" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="228,158,0,0" Width="104" Height="32" Content="Continue" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsDefault="True" Classes="accent" />
+        <Button x:Name="buttonCancel" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="340,158,0,0" Width="80" Height="32" Content="Cancel" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsCancel="True" />
     </Grid>
 </Window>
 '@
@@ -155,7 +155,7 @@ $formExchangeAccessXaml = @'
     <Grid>
         <TextBlock x:Name="labelTitle" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,16,0,0" Width="420" Height="32" Text="Exchange Online Access Control" FontSize="22" FontWeight="SemiBold" />
         <TextBlock x:Name="labelConnection" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="20,54,200,0" Height="20" Text="Not connected to Exchange Online" />
-        <Button x:Name="buttonConnect" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,20,0" Width="120" Height="32" Content="Connect" Classes="accent" />
+        <Button x:Name="buttonConnect" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,20,0" Width="120" Height="32" Content="Connect" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Classes="accent" />
         <GroupBox x:Name="groupWho" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,84,0,0" Width="360" Height="200" Header="Mailbox and person">
             <Grid>
                 <TextBlock x:Name="labelMailbox" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,0,0,0" Width="330" Height="20" Text="Mailbox whose permissions you change" />
@@ -186,16 +186,16 @@ $formExchangeAccessXaml = @'
                 </ComboBox>
             </Grid>
         </GroupBox>
-        <Button x:Name="buttonCheck" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,296,0,0" Width="130" Height="32" Content="Check Access" IsDefault="True" />
-        <Button x:Name="buttonGive" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="158,296,0,0" Width="130" Height="32" Content="Give Access" Classes="accent" />
-        <Button x:Name="buttonRemove" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="296,296,0,0" Width="130" Height="32" Content="Remove Access" />
+        <Button x:Name="buttonCheck" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,296,0,0" Width="130" Height="32" Content="Check Access" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsDefault="True" />
+        <Button x:Name="buttonGive" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="158,296,0,0" Width="130" Height="32" Content="Give Access" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Classes="accent" />
+        <Button x:Name="buttonRemove" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="296,296,0,0" Width="130" Height="32" Content="Remove Access" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
         <HyperlinkButton x:Name="linkPermissionHelp" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,296,20,0" Width="240" Height="32" Content="About calendar permission levels" NavigateUri="https://learn.microsoft.com/powershell/module/exchange/add-mailboxfolderpermission#-accessrights" />
         <TextBlock x:Name="labelResults" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,344,0,0" Width="200" Height="20" Text="Results" FontWeight="SemiBold" />
-        <Button x:Name="buttonSaveReport" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,338,116,0" Width="96" Height="28" Content="Save..." />
-        <Button x:Name="buttonClear" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,338,20,0" Width="88" Height="28" Content="Clear" />
+        <Button x:Name="buttonSaveReport" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,338,116,0" Width="96" Height="28" Content="Save..." HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
+        <Button x:Name="buttonClear" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,338,20,0" Width="88" Height="28" Content="Clear" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
         <TextBox x:Name="textboxResults" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="20,372,20,64" Watermark="Check, give or remove access to see the permissions and the commands that were used." AcceptsReturn="True" IsReadOnly="True" FontFamily="Cascadia Mono, Consolas, monospace" FontSize="12" />
         <TextBlock x:Name="labelStatus" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="20,0,160,26" Height="20" Text="Ready" />
-        <Button x:Name="buttonExit" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,20" Width="80" Height="32" Content="Exit" />
+        <Button x:Name="buttonExit" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,20" Width="80" Height="32" Content="Exit" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" />
     </Grid>
 </Window>
 '@

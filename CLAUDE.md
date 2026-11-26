@@ -74,7 +74,9 @@ CI only parses scripts. Real behaviour needs Windows with GliderUI: see the `ver
 
 ## Verified GliderUI facts (0.5.0 / 0.6.0)
 
-- 0.6.0 switched the server to Avalonia 12.2's **Fluent2** theme (`<Fluent2Theme />`); the DataGrid still uses the old Fluent styles.
+- 0.6.0 switched the server to Avalonia 12.2's **Fluent2** theme (`<Fluent2Theme />`); the DataGrid still uses the old Fluent styles (black header in Dark). The `.v-*` preview was compared with real 0.6.0 windows in Dark and Light.
+- Avalonia defaults that differ from what the designer draws are written with `forceEmit`: Button content alignment (Avalonia: Left/Top) and TimePicker `ClockIdentifier` (Avalonia: 24-hour when the culture's time pattern has `H`). DatePicker column order and the CalendarDatePicker watermark follow the culture; the preview uses the browser's locale.
+- If the **same GliderUI server version is installed twice** (two module folders), GliderUI 0.6.0 joins both paths and the window can't start. Never add a temp copy of a version that is already installed.
 
 - The generated pattern is `[AvaloniaRuntimeXamlLoader]::Parse($xaml, $null)`, then `$win.FindControl('name')`, then `$ctl.Add<Event>($handler)`. Handlers are script blocks or `[EventCallback]@{...}` with `param ($argumentList, $s, $e)`.
 - **Main-runspace callbacks only run while the script is inside `WaitForClosed()`.** Never block before it. A nested `$dialog.WaitForClosed()` inside a handler works; that is how the modal `Show-<form>` dialogs work.

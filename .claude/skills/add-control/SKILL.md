@@ -35,7 +35,8 @@ Expander: {
 
 - `P(key, type, default, category, extra)`. Types: text, multiline, number, bool, enum (`options`), color, list, anchor.
 - `extra`: `noXaml` (handled in code), `post` (set after load, e.g. `SelectedIndex`), `xaml` (attribute name, e.g. `ToolTip.Tip`), `hint` (help text).
-- Only values that differ from the default are written to the XAML, so defaults must match Avalonia's real defaults.
+- Only values that differ from the default are written to the XAML, so defaults must match Avalonia's real defaults. When the designer's default deliberately differs (Button content is centered here but Left/Top in Avalonia; TimePicker's clock follows the culture in Avalonia), mark the property `forceEmit: true` so the value is always written.
+- The preview must match a real GliderUI 0.6 window (Fluent2) in Dark and Light: put the control in a form, run it, screenshot the client area and compare with the designer (see `test-designer-ui` / `verify-gui-runtime`).
 - If the XAML element differs from the type key, set `element: 'Panel'`. For child items, add `xamlChildren(n, indent)`.
 - For containers, `GC.slotSize()` in `js/codegen.js` must return the inner size that matches your CSS, or Anchor margins are off.
 - Add it to `TOOLBOX` in the right group.

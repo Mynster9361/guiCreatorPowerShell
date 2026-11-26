@@ -96,18 +96,18 @@ code { font-family: var(--mono); font-size: 12px; background: var(--bg3); paddin
 .guide.v { width: 1px; } .guide.h { height: 1px; }
 .dim-tip { position: absolute; background: #1d5fb8; color: #fff; font-size: 11px; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
 
-/* ===== the designed Window (Avalonia Fluent look-alike) ===== */
+/* ===== the designed Window (look-alike of GliderUI 0.6's Fluent2 theme, compared with real windows) ===== */
 .fw {
-  --bg: #ffffff; --fg: #1b1b1b; --sub: #6e6e6e; --ctl: rgba(0, 0, 0, .06); --ctl2: #ffffff; --bdr: rgba(0, 0, 0, .18); --bdr2: rgba(0, 0, 0, .45);
-  --acc: #0078d4; --acc-fg: #fff; --sel: rgba(0, 0, 0, .07); --dot: rgba(0, 0, 0, .22); --title: #f3f3f3;
-  --card: rgba(255, 255, 255, .7); --card-bdr: rgba(0, 0, 0, .1);
+  --bg: #f3f3f3; --fg: #1b1b1b; --sub: #6e6e6e; --ctl: rgba(255, 255, 255, .7); --ctl2: rgba(255, 255, 255, .7); --bdr: rgba(0, 0, 0, .12); --bdr2: rgba(0, 0, 0, .45);
+  --acc: #005fb8; --acc-fg: #fff; --sel: rgba(0, 0, 0, .05); --dot: rgba(0, 0, 0, .22); --title: #ebebeb;
+  --card: rgba(255, 255, 255, .7); --card-bdr: rgba(0, 0, 0, .1); --link: #003e92; --thumb: #ffffff; --dg-hd: #ffffff;
   position: relative; box-shadow: 0 12px 40px rgba(0, 0, 0, .55), 0 0 0 1px rgba(0, 0, 0, .6); border-radius: 8px; overflow: visible;
   font: 14px/1.3 'Segoe UI', 'Inter', system-ui, sans-serif; color: var(--fg);
 }
 .fw.dark {
   --bg: #202020; --fg: #ffffff; --sub: #a5a5a5; --ctl: rgba(255, 255, 255, .08); --ctl2: rgba(255, 255, 255, .05); --bdr: rgba(255, 255, 255, .14); --bdr2: rgba(255, 255, 255, .55);
   --acc: #60cdff; --acc-fg: #000; --sel: rgba(255, 255, 255, .08); --dot: rgba(255, 255, 255, .18); --title: #2b2b2b;
-  --card: rgba(255, 255, 255, .05); --card-bdr: rgba(255, 255, 255, .08);
+  --card: rgba(255, 255, 255, .05); --card-bdr: rgba(255, 255, 255, .08); --link: #9ccbff; --thumb: #454545; --dg-hd: #000000;
 }
 .fw-title { height: 32px; display: flex; align-items: center; background: var(--title); border-radius: 8px 8px 0 0; color: var(--fg); font-size: 12px; padding-left: 12px; gap: 8px; }
 .fw-title .ico { width: 16px; height: 16px; border-radius: 3px; background: linear-gradient(135deg, #2b6fd6, #1b4fa0); }
@@ -166,37 +166,44 @@ code { font-family: var(--mono); font-size: 12px; background: var(--bg3); paddin
 .v-ts .sw i { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--sub); top: 3px; left: 4px; }
 .v-ts .sw.on { background: var(--acc); border-color: var(--acc); }
 .v-ts .sw.on i { left: 22px; background: var(--acc-fg); }
-.v-link { display: flex; align-items: center; justify-content: center; color: var(--ufg, var(--acc)); background: var(--ubg, transparent); }
+.v-link { display: flex; align-items: center; padding: 0 12px; color: var(--ufg, var(--link)); background: var(--ubg, transparent); }
 .v-cb { display: flex; align-items: center; justify-content: space-between; background: var(--ubg, var(--ctl2)); border: 1px solid var(--bdr); border-bottom-color: var(--bdr2); border-radius: 4px; padding: 0 10px; overflow: hidden; }
 .chev { width: 8px; height: 8px; border-right: 1.5px solid var(--fg); border-bottom: 1.5px solid var(--fg); transform: rotate(45deg) translate(-2px, -2px); flex: none; opacity: .8; }
-.v-lb { background: var(--ubg, var(--bg)); border: 1px solid var(--bdr); border-radius: 4px; overflow: hidden; padding: 2px 0; }
-.v-lb .it { padding: 6px 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.v-lb .it.sel { background: var(--sel); box-shadow: inset 3px 0 0 var(--acc); }
+/* ListBox: 40px items, the selected one inset 4px with a small accent pill */
+.v-lb { background: var(--ubg, transparent); overflow: hidden; }
+.v-lb .it { position: relative; height: 40px; line-height: 40px; margin: 0 4px; padding: 0 12px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-lb .it.sel { background: var(--sel); }
+.v-lb .it.sel::before { content: ''; position: absolute; left: 0; top: 12px; width: 3px; height: 16px; border-radius: 2px; background: var(--acc); }
+/* Slider: the track sits in a fixed 14px + 22px (thumb) + 14px grid, so its center is 25px from the top/left */
 .v-sl { position: relative; background: var(--ubg, transparent); }
-.v-sl .track { position: absolute; left: 0; right: 0; top: calc(50% - 2px); height: 4px; border-radius: 2px; background: var(--bdr2); }
+.v-sl .track { position: absolute; left: 0; right: 0; top: 23px; height: 4px; border-radius: 2px; background: var(--bdr2); }
 .v-sl .fill { height: 100%; background: var(--acc); border-radius: 2px; }
-.v-sl .thumb { position: absolute; top: calc(50% - 10px); width: 20px; height: 20px; border-radius: 50%; background: var(--bg); border: 1px solid var(--bdr); box-shadow: inset 0 0 0 4px var(--bg), inset 0 0 0 10px var(--acc); }
-.v-sl.vert .track { left: calc(50% - 2px); right: auto; width: 4px; top: 0; bottom: 0; height: auto; display: flex; align-items: flex-end; }
+.v-sl .thumb { position: absolute; top: 14px; width: 22px; height: 22px; border-radius: 50%; background: var(--thumb); border: 1px solid var(--bdr); box-shadow: inset 0 0 0 4px var(--thumb), inset 0 0 0 11px var(--acc); }
+.v-sl.vert .track { left: 23px; right: auto; width: 4px; top: 0; bottom: 0; height: auto; display: flex; align-items: flex-end; }
 .v-sl.vert .fill { width: 100%; }
-.v-sl.vert .thumb { top: auto; left: calc(50% - 10px); }
+.v-sl.vert .thumb { top: auto; left: 14px; }
 .v-pb { display: flex; align-items: center; gap: 8px; background: var(--ubg, transparent); }
-.v-pb .track { flex: 1; height: 4px; border-radius: 2px; background: var(--bdr); overflow: hidden; }
+/* ProgressBar: a 1px line with a 3px accent fill */
+.v-pb .track { flex: 1; height: 3px; background: linear-gradient(to bottom, transparent 1px, var(--bdr2) 1px, var(--bdr2) 2px, transparent 2px); }
 .v-pb .fill { height: 100%; background: var(--acc); border-radius: 2px; }
 .v-pb.indet .fill { margin-left: 30%; }
 .v-pb span { font-size: 12px; }
-.v-nud { justify-content: space-between; padding-right: 2px; }
-.v-nud .spin { display: flex; gap: 2px; }
-.v-nud .spin i { font-style: normal; font-size: 9px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 3px; background: var(--ctl); }
+.v-nud { justify-content: space-between; padding-right: 10px; }
+.v-nud .spin { display: flex; gap: 26px; align-items: center; }
+.v-nud .spin .chev { width: 7px; height: 7px; border-width: 0 1.2px 1.2px 0; }
+.v-nud .spin .chev.up { transform: rotate(-135deg) translate(-2px, -2px); }
 .v-seg { display: flex; border: 1px solid var(--bdr); border-radius: 4px; background: var(--ubg, var(--ctl2)); overflow: hidden; }
 .v-seg span { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--sub); border-left: 1px solid var(--bdr); }
 .v-seg span:first-child { border-left: 0; }
-.v-cal { justify-content: space-between; }
-.calico { width: 14px; height: 13px; border: 1.5px solid var(--sub); border-top-width: 3px; border-radius: 2px; flex: none; }
-.v-dg { display: flex; flex-direction: column; border: 1px solid var(--bdr); border-radius: 4px; background: var(--ubg, var(--bg)); overflow: hidden; }
-.v-dg .hd { display: flex; flex: none; border-bottom: 1px solid var(--bdr); font-weight: 600; }
-.v-dg .c { flex: 1; min-width: 0; padding: 8px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid var(--bdr); }
-.v-dg .c:last-child { border-right: 0; }
-.v-dg .body { flex: 1; background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--sel) 31px 32px); }
+.v-date span.month { flex: 1.75; justify-content: flex-start; padding-left: 10px; }
+.v-cal { justify-content: space-between; padding: 0 8px 0 6px; }
+.calico { width: 11px; height: 11px; border: 1px solid var(--sub); border-top-width: 2.5px; border-radius: 2px; flex: none; }
+/* DataGrid: GliderUI 0.6 still uses the old Fluent DataGrid styles (header black in Dark), columns sized to their headers */
+.v-dg { display: flex; flex-direction: column; background: var(--ubg, transparent); overflow: hidden; }
+.v-dg .hd { display: flex; flex: none; height: 32px; background: var(--dg-hd); border-bottom: 1px solid var(--bdr); font-size: 12px; color: var(--sub); }
+.v-dg .c { flex: none; display: flex; align-items: center; padding: 0 32px 0 12px; min-width: 32px; white-space: nowrap; overflow: hidden; border-right: 1px solid var(--bdr); }
+.v-dg .rest { flex: 1; }
+.v-dg .body { flex: 1; }
 .v-border { background: var(--ubg, transparent); display: flex; overflow: hidden; }
 .v-border > .slot { flex: 1; }
 /* GroupBox and TabControl follow GliderUI 0.6's Fluent2 theme. Their content areas must match

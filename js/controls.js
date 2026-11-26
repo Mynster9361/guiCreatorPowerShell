@@ -23,6 +23,20 @@
     const min = num(p.Minimum, 0), max = num(p.Maximum, 100), v = num(p.Value, 0);
     return max > min ? Math.max(0, Math.min(100, ((v - min) / (max - min)) * 100)) : 0;
   };
+  // Date pickers follow the user's culture in Avalonia; the browser's locale stands in for it.
+  let dateFmt;
+  const dateFormatParts = () => {
+    try {
+      dateFmt = dateFmt || new Intl.DateTimeFormat(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(2001, 10, 22));
+    } catch (e) {
+      dateFmt = [{ type: 'month' }, { type: 'literal', value: '/' }, { type: 'day' }, { type: 'literal', value: '/' }, { type: 'year' }];
+    }
+    return dateFmt;
+  };
+  /** 'day' | 'month' | 'year' in the order of the short date, e.g. ['day', 'month', 'year']. */
+  const dateParts = () => dateFormatParts().map((x) => x.type).filter((t) => t === 'day' || t === 'month' || t === 'year');
+  /** The short date pattern, e.g. 'dd-MM-yyyy'. */
+  const datePattern = () => dateFormatParts().map((x) => ({ day: 'dd', month: 'MM', year: 'yyyy' })[x.type] || (x.type === 'literal' ? x.value : '')).join('');
 
   // Properties available on every control (Appearance / Behavior)
   const COMMON_PROPS = [
@@ -90,8 +104,10 @@
       label: 'Button', prefix: 'button', size: [100, 32], textProp: 'Content', defaultEvent: 'Click',
       props: [
         P('Content', 'text', '', 'Common'),
-        P('HorizontalContentAlignment', 'enum', 'Center', 'Layout', { options: HALIGN }),
-        P('VerticalContentAlignment', 'enum', 'Center', 'Layout', { options: VALIGN }),
+        // Avalonia's own default is Left/Top (text against the left edge); always written so the
+        // centered text the designer shows is what the window shows.
+        P('HorizontalContentAlignment', 'enum', 'Center', 'Layout', { options: HALIGN, forceEmit: true }),
+        P('VerticalContentAlignment', 'enum', 'Center', 'Layout', { options: VALIGN, forceEmit: true }),
         P('IsDefault', 'bool', false, 'Behavior'),
         P('IsCancel', 'bool', false, 'Behavior'),
       ],
@@ -219,7 +235,7 @@
       },
       render: (n, p) => {
         const cols = dgCols(p.Columns);
-        return `<div class="v-dg"><div class="hd">${cols.length ? cols.map((c) => `<div class="c">${esc(c.h)}</div>`).join('') : '<div class="c ph">(no columns)</div>'}</div><div class="body"></div></div>`;
+        return `<div class="v-dg"><div class="hd">${cols.length ? cols.map((c) => `<div class="c">${esc(c.h)}</div>`).join('') : '<div class="c">(no columns)</div>'}<div class="rest"></div></div><div class="body"></div></div>`;
       },
     },
     Slider: {
@@ -238,9 +254,10 @@
       events: ['ValueChanged'],
       render: (n, p) => {
         const v = pct(p);
+        // the thumb (22px) travels within the track, so 0% and 100% keep it inside the control
         return p.Orientation === 'Vertical'
-          ? `<div class="v-sl vert"><div class="track"><div class="fill" style="height:${v}%"></div></div><div class="thumb" style="bottom:calc(${v}% - 10px)"></div></div>`
-          : `<div class="v-sl"><div class="track"><div class="fill" style="width:${v}%"></div></div><div class="thumb" style="left:calc(${v}% - 10px)"></div></div>`;
+          ? `<div class="v-sl vert"><div class="track"><div class="fill" style="height:${v}%"></div></div><div class="thumb" style="bottom:calc(${v} * (100% - 22px) / 100)"></div></div>`
+          : `<div class="v-sl"><div class="track"><div class="fill" style="width:${v}%"></div></div><div class="thumb" style="left:calc(${v} * (100% - 22px) / 100)"></div></div>`;
       },
     },
     ProgressBar: {
@@ -271,24 +288,28 @@
       ],
       events: ['ValueChanged'],
       render: (n, p) =>
-        `<div class="v-tb v-nud"><span class="${p.Value === '' ? 'ph' : ''}">${esc(p.Value === '' ? p.Watermark : p.Value)}</span><span class="spin"><i>&#9650;</i><i>&#9660;</i></span></div>`,
+        `<div class="v-tb v-nud"><span class="${p.Value === '' ? 'ph' : ''}">${esc(p.Value === '' ? p.Watermark : p.Value)}</span><span class="spin"><i class="chev up"></i><i class="chev"></i></span></div>`,
     },
     DatePicker: {
       valueProp: 'SelectedDate', label: 'DatePicker', prefix: 'datepicker', size: [300, 32], defaultEvent: 'SelectedDateChanged',
       props: [P('DayVisible', 'bool', true, 'Appearance'), P('MonthVisible', 'bool', true, 'Appearance'), P('YearVisible', 'bool', true, 'Appearance')],
       events: ['SelectedDateChanged'],
+      // Avalonia orders the columns by the user's culture; the browser's locale is the best guess here.
       render: (n, p) =>
-        `<div class="v-seg">${[p.MonthVisible && 'month', p.DayVisible && 'day', p.YearVisible && 'year'].filter(Boolean).map((s) => `<span>${s}</span>`).join('')}</div>`,
+        `<div class="v-seg v-date">${dateParts().filter((s) => p[s[0].toUpperCase() + s.slice(1) + 'Visible']).map((s) => `<span class="${s}">${s}</span>`).join('')}</div>`,
     },
     CalendarDatePicker: {
       valueProp: 'SelectedDate', label: 'CalendarDatePicker', prefix: 'calendardatepicker', size: [170, 32], defaultEvent: 'SelectedDateChanged',
       props: [P('Watermark', 'text', '', 'Common')],
       events: ['SelectedDateChanged'],
-      render: (n, p) => `<div class="v-tb v-cal"><span class="ph">${esc(p.Watermark || 'Select a date')}</span><span class="calico"></span></div>`,
+      // Without a Watermark, Avalonia shows the culture's short date pattern, e.g. <dd-MM-yyyy>.
+      render: (n, p) => `<div class="v-tb v-cal"><span class="ph">${esc(p.Watermark || `<${datePattern()}>`)}</span><span class="calico"></span></div>`,
     },
     TimePicker: {
       valueProp: 'SelectedTime', label: 'TimePicker', prefix: 'timepicker', size: [240, 32], defaultEvent: 'SelectedTimeChanged',
-      props: [P('ClockIdentifier', 'enum', '12HourClock', 'Behavior', { options: ['12HourClock', '24HourClock'] }), P('MinuteIncrement', 'number', 1, 'Behavior')],
+      // Always written: without it Avalonia follows the culture (24-hour in most of Europe), while
+      // the designer shows the chosen clock.
+      props: [P('ClockIdentifier', 'enum', '12HourClock', 'Behavior', { options: ['12HourClock', '24HourClock'], forceEmit: true }), P('MinuteIncrement', 'number', 1, 'Behavior')],
       events: ['SelectedTimeChanged'],
       render: (n, p) => `<div class="v-seg"><span>hour</span><span>minute</span>${p.ClockIdentifier === '12HourClock' ? '<span>AM</span>' : ''}</div>`,
     },
