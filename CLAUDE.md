@@ -33,6 +33,8 @@ A browser-based PowerShell GUI designer (in the style of SAPIEN PowerShell Studi
   - `forms[0]` is the startup form; every other form becomes a `Show-<name>` dialog function.
   - In `app.js`, `doc` is the active form.
   - `normalize()` migrates v1 projects (examples are built in the v1 shape).
+- **Examples are copies.** The open design is kept in localStorage, so a design opened from an example stays that version after the example changes. Exporting it gives the old script. `loadExample` records `project.example = { file, stamp, design }`, and on start `checkExampleUpdate()` offers the updated example. Designs saved before that are recognised by their startup form's name and title.
+- **Caching:** the launcher sends `Cache-Control: no-store`. GitHub Pages sends `max-age=600`, so `pages.yml` adds `?v=<commit>` to every js/css URL in the deployed `index.html`, and the deploy fails if one is missed.
 - **Undo** snapshots the whole project. `restore()` keeps the script text you typed after the last designer step (`committedScripts`); every script keystroke updates `lastSnap`.
 - **Generated script order** (`genScript`):
   1. header and credits,

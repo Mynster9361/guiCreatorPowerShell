@@ -1651,16 +1651,84 @@
     }
   }
 
+  /** Short fingerprint of a string (FNV-1a), used to notice that an example has changed. */
+  const fingerprint = (s) => {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+    return (h >>> 0).toString(16);
+  };
+  const exampleStamp = (ex) => fingerprint(JSON.stringify(ex.build()));
+  const designStamp = (p) => fingerprint(JSON.stringify(p.forms));
+
   function loadExample(ex) {
     if (GC.allControls(doc).length && !confirm('Open the "' + ex.name + '" example? It replaces the current design (save it first if you need it).')) return;
     loadProject(ex.build());
+    // Remember which example this is, so a later visit can offer its updated version (the open
+    // design is kept in the browser, and an old copy of an example otherwise lives on unnoticed).
+    project.example = { file: ex.file, stamp: exampleStamp(ex), design: designStamp(project) };
+    persist();
     showTab('designer');
     toast('Loaded example: ' + ex.name);
     status(ex.description);
   }
 
+  /** On start: the restored design is an example that has changed since it was opened? Offer the new one. */
+  function checkExampleUpdate() {
+    let info = project.example;
+    let ex = info && GC.EXAMPLES.find((e) => e.file === info.file);
+    let legacy = false;
+    if (!info) {
+      // Designs saved before examples were recorded: recognise an example by its startup form.
+      const main = project.forms[0].form;
+      ex = GC.EXAMPLES.find((e) => {
+        const f = GC.formsOf(e.build())[0].form;
+        return f.name === main.name && (f.props.Title || '') === (main.props.Title || '');
+      });
+      if (!ex || designStamp(normalize(ex.build())) === designStamp(project)) return;
+      legacy = true;
+      info = { file: ex.file, stamp: '', design: '' }; // saved with the design only once the user chooses
+    }
+    if (!ex) return;
+    const stamp = exampleStamp(ex);
+    if (stamp === info.stamp) return;
+    const changed = designStamp(project) !== info.design;
+    modal(
+      'This example has been updated',
+      (legacy
+        ? `<p>This design looks like the <b>${esc(ex.name)}</b> example, and that example is different now. The designer keeps the design you had open, so it may be an older copy.</p>` +
+          '<p>Opening the updated example replaces this design. If you changed it, export or save it first.</p>'
+        : `<p>The <b>${esc(ex.name)}</b> example has changed since you opened it. The designer still has the copy you opened then.</p>` +
+          (changed ? '<p>You have changed that copy. Opening the updated example replaces your changes, so export or save them first if you need them.</p>' : '<p>You have not changed that copy.</p>')),
+      [
+        {
+          label: 'Keep my copy',
+          action: () => {
+            info.stamp = stamp; // don't ask again for this version of the example
+            if (legacy) info.design = designStamp(project);
+            project.example = info;
+            persist();
+            $('#modal').hidden = true;
+          },
+        },
+        {
+          label: 'Open the updated example',
+          primary: true,
+          action: () => {
+            $('#modal').hidden = true;
+            loadProject(ex.build());
+            project.example = { file: ex.file, stamp, design: designStamp(project) };
+            persist();
+            showTab('designer');
+            toast('Loaded example: ' + ex.name);
+          },
+        },
+      ]
+    );
+  }
+
   function loadProject(p) {
     project = normalize(p);
+    delete project.example; // only loadExample sets it
     undoStack = [];
     redoStack = [];
     selection = ['form'];
@@ -2109,6 +2177,7 @@
     });
 
     renderAll();
+    checkExampleUpdate();
     if (GC.tour) setTimeout(() => GC.tour.offer(), 300);
   }
 
