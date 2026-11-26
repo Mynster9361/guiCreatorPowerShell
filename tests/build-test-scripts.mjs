@@ -91,6 +91,18 @@ const allControls = {
 write('all-controls.ps1', checkProject('all-controls', allControls));
 write('all-controls.xaml', GC.genXaml(allControls.forms[0]));
 
+// A TabControl's template copies its HorizontalAlignment/VerticalAlignment onto the inner Border, so
+// the Anchor layout must sit on a wrapping Panel; otherwise Bottom/Right anchors inside a tab break.
+{
+  const lines = GC.genXaml(allControls.forms[0]).split('\n');
+  const at = lines.findIndex((l) => /<TabControl\b/.test(l));
+  check(at > 0, 'all-controls: no TabControl in the XAML');
+  if (at > 0) {
+    check(!/\b(HorizontalAlignment|VerticalAlignment|Margin|Width|Height)=/.test(lines[at]), `all-controls: the TabControl carries layout attributes: ${lines[at].trim()}`);
+    check(/^\s*<Panel HorizontalAlignment="[^"]+" VerticalAlignment="[^"]+" Margin=/.test(lines[at - 1]), `all-controls: the TabControl is not wrapped in a layout Panel: ${lines[at - 1].trim()}`);
+  }
+}
+
 // ---------------------------------------------------------------- snippets
 // Insert each snippet into the script of a project that has the controls snippets refer to,
 // so names and helper functions resolve exactly as they would in the designer.

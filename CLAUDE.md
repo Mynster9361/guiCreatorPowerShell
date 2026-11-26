@@ -49,6 +49,8 @@ A browser-based PowerShell GUI designer (in the style of SAPIEN PowerShell Studi
   - TabControl: tab strip 48;
   - Menu: 32.
 
+  A TabControl's layout attributes go on a wrapping `<Panel>`, not on the TabControl. Its template (Fluent and Fluent2) copies `HorizontalAlignment`/`VerticalAlignment` onto its inner Border, so a Left/Top-aligned TabControl shrinks its tab content to the size of the tab headers, and Bottom/Right anchors inside a tab break.
+
   If you change one, change the other.
 - **Links** (GliderUI, author, video, this repo) live only in `GC.CREDITS` in `codegen.js`.
 - **Launcher security:** listens on localhost only, needs the random token injected into the served `index.html`, rejects foreign Host headers, and serves only allowlisted static files. Never weaken this. Its body runs in `& { }` so dot-sourcing (VS Code F5) leaks nothing, and runs share its console (WAM needs it).

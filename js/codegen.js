@@ -82,7 +82,21 @@
 
   function genNode(n, ind, out, W, H) {
     const t = GC.TYPES[n.type];
-    const attrs = [`x:Name="${n.name}"`].concat(layoutAttrs(n, W, H));
+    const layout = layoutAttrs(n, W, H);
+    if (n.type === 'TabControl') {
+      // The TabControl template copies HorizontalAlignment/VerticalAlignment onto its inner Border
+      // (Fluent and Fluent2), so a Left/Top-aligned TabControl shrinks the tab content to the size of
+      // the tab headers and Bottom/Right anchors inside a tab break. A Panel takes the Anchor layout
+      // and the TabControl stretches inside it.
+      out.push(`${ind}<Panel ${layout.join(' ')}>`);
+      genElement(n, t, [`x:Name="${n.name}"`], ind + '    ', out);
+      out.push(`${ind}</Panel>`);
+      return;
+    }
+    genElement(n, t, [`x:Name="${n.name}"`].concat(layout), ind, out);
+  }
+
+  function genElement(n, t, attrs, ind, out) {
     GC.propsFor(n.type).forEach((p) => {
       if (p.noXaml || p.post) return;
       const v = n.props[p.key];
