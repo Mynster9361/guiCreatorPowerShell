@@ -131,7 +131,17 @@ The original scripts build their windows in code. In these versions the layout i
 
 ### Project Dashboard (Fluent2 design)
 
-**Examples, then Project Dashboard (Fluent2)** shows how to build a Windows 11 style app from the toolbox alone. It has a navigation list with icons, stat cards, tabs, a task table with filters, and an edit panel. The look comes from a few design rules:
+**Examples, then Project Dashboard (Fluent2)** is a complete Windows 11 style app built from the toolbox alone:
+
+- **Navigation:** six pages (Home, Projects, My tasks, Calendar, Team, Reports) in a Pages container, switched from a list with icons. The pinned projects switch the project.
+- **Project view:** a status badge and team avatars. The tabs are Overview, Tasks, Timeline, Files and Activity. The Tasks tab has filters, a task table and an edit panel with Save, Cancel and Delete.
+- **Dialogs:** New task, Delete confirmation, Notifications (overdue and soon-due tasks, with a count on the bell) and Settings. Each is a second form, opened with `Show-<form>`.
+- **Files and sharing:** link files with the file picker, export tasks to CSV with the save picker, and copy a summary to the clipboard. The search box filters tasks.
+- **Saved data:** projects, tasks and activity are saved to `%LOCALAPPDATA%\GUI Creator\ProjectDashboard.json`. Settings can turn this off or reset to the sample data.
+
+The script shows how to keep a large GliderUI window fast. Every read of a control or `[DataSource]` property is a call to the GliderUI server, so tasks are plain PowerShell objects and the grids show their `[DataSource]` rows. Only the visible page is refreshed.
+
+The look comes from a few design rules:
 
 - **Cards:** a Panel with Background `#FFFFFF`, BorderBrush `#E0E0E0`, BorderThickness `1` and CornerRadius `8`. Badges and avatars are small Panels with a large CornerRadius.
 - **Type sizes:** 12 for grey captions, 14 for body text, 16 SemiBold for card titles, 28 SemiBold for titles and numbers.
