@@ -111,6 +111,11 @@ write('all-controls.xaml', GC.genXaml(allControls.forms[0]));
   check(/<TimePicker [^>]*ClockIdentifier="12HourClock"/.test(xaml), 'all-controls: TimePicker ClockIdentifier is not written');
 }
 
+// Avalonia colours put alpha first (#AARRGGBB); the designer preview (CSS) needs it last.
+for (const [avalonia, css] of [['#CC0078D4', '#0078D4CC'], ['#8F00', '#F008'], ['#0078D4', '#0078D4'], ['Gray', 'Gray'], ['', '']]) {
+  check(GC.cssColor(avalonia) === css, `cssColor(${avalonia}) is ${GC.cssColor(avalonia)}, expected ${css}`);
+}
+
 // ---------------------------------------------------------------- container sizes (Fluent2)
 // Measured with UI Automation in real GliderUI 0.6.0 windows (270x220 containers): GroupBox content
 // at 13,45 with 13px insets (13,25 without a Header), TabControl content at 0,41.

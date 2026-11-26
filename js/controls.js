@@ -23,6 +23,19 @@
     const min = num(p.Minimum, 0), max = num(p.Maximum, 100), v = num(p.Value, 0);
     return max > min ? Math.max(0, Math.min(100, ((v - min) / (max - min)) * 100)) : 0;
   };
+  /** Avalonia colours put alpha first (#AARRGGBB, #ARGB); CSS puts it last (#RRGGBBAA, #RGBA). */
+  GC.cssColor = (v) => {
+    const s = String(v == null ? '' : v).trim();
+    const m = /^#([0-9a-f]{2})([0-9a-f]{6})$/i.exec(s) || /^#([0-9a-f])([0-9a-f]{3})$/i.exec(s);
+    return m ? `#${m[2]}${m[1]}` : s;
+  };
+  /** Avalonia CornerRadius ("8", "8,0,0,0" = top-left, top-right, bottom-right, bottom-left) as CSS. */
+  const cssRadius = (v) => {
+    const parts = String(v == null ? '' : v).split(/[\s,]+/).filter(Boolean).map((x) => num(x, 0));
+    if (parts.length === 4) return parts.map((x) => x + 'px').join(' ');
+    if (parts.length === 2) return `${parts[0]}px ${parts[0]}px ${parts[1]}px ${parts[1]}px`; // top, bottom
+    return (parts[0] || 0) + 'px';
+  };
   // Date pickers follow the user's culture in Avalonia; the browser's locale stands in for it.
   let dateFmt;
   const dateFormatParts = () => {
@@ -320,7 +333,7 @@
       events: [],
       render: (n, p) => {
         const bt = num(String(p.BorderThickness).split(/[ ,]+/)[0], 0);
-        return `<div class="v-border" style="border:${bt}px solid ${esc(p.BorderBrush || 'transparent')};border-radius:${num(String(p.CornerRadius).split(/[ ,]+/)[0], 0)}px"><div class="slot" data-owner="${n.id}" data-slot="0"></div></div>`;
+        return `<div class="v-border" style="border:${bt}px solid ${esc(GC.cssColor(p.BorderBrush) || 'transparent')};border-radius:${cssRadius(p.CornerRadius)}"><div class="slot" data-owner="${n.id}" data-slot="0"></div></div>`;
       },
     },
     GroupBox: {

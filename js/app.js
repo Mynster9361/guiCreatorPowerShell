@@ -427,7 +427,7 @@
     );
     const client = h('div', { class: 'fw-client' });
     client.style.height = num(p.Height, 420) + 'px';
-    if (p.Background) client.style.background = p.Background;
+    if (p.Background) client.style.background = GC.cssColor(p.Background);
     if (p.FontFamily) client.style.fontFamily = p.FontFamily;
     if (p.FontSize !== '' && p.FontSize != null) client.style.fontSize = p.FontSize + 'px';
     if (doc.menu) client.append(renderMenuStrip());
@@ -445,8 +445,8 @@
     const p = n.props;
     const el = h('div', { class: 'ctl t-' + n.type, 'data-id': n.id });
     Object.assign(el.style, { left: n.x + 'px', top: n.y + 'px', width: n.w + 'px', height: n.h + 'px' });
-    if (p.Background) el.style.setProperty('--ubg', p.Background);
-    if (p.Foreground) el.style.setProperty('--ufg', p.Foreground);
+    if (p.Background) el.style.setProperty('--ubg', GC.cssColor(p.Background));
+    if (p.Foreground) el.style.setProperty('--ufg', GC.cssColor(p.Foreground));
     if (p.FontFamily) el.style.fontFamily = p.FontFamily;
     if (p.FontSize !== '' && p.FontSize != null) el.style.fontSize = p.FontSize + 'px';
     if (p.FontWeight && p.FontWeight !== 'Normal') el.style.fontWeight = { Light: 300, SemiBold: 600, Bold: 700, ExtraBold: 800 }[p.FontWeight];
@@ -1296,8 +1296,11 @@
         const text = h('input', { 'data-key': k, value: val, placeholder: '(default)', spellcheck: 'false' });
         const pick = h('input', { type: 'color', value: toHex(val), title: 'Pick a color' });
         text.addEventListener('change', () => set(text.value.trim()));
-        pick.addEventListener('input', () => (text.value = pick.value));
-        pick.addEventListener('change', () => set(pick.value));
+        // the picker has no alpha: keep the alpha of an #AARRGGBB value
+        const alpha = () => (/^#([0-9a-f]{2})[0-9a-f]{6}$/i.exec(String(val).trim()) || [])[1] || '';
+        const picked = () => (alpha() ? '#' + alpha() + pick.value.slice(1) : pick.value).toUpperCase();
+        pick.addEventListener('input', () => (text.value = picked()));
+        pick.addEventListener('change', () => set(picked()));
         onKeys(text, () => (text.value = val));
         return h('div', { class: 'color' }, text, pick);
       }
