@@ -10,12 +10,12 @@ Commit and push only when the user asks for it, or has asked for it in this line
 ## 1. Checks (all must pass)
 
 ```bash
-for f in js/*.js tests/*.mjs tests/tools/*.mjs; do node --check "$f" || exit 1; done
+failed=; for f in js/*.js tests/*.mjs tests/tools/*.mjs; do node --check "$f" || failed="$failed $f"; done; [ -z "$failed" ] || { echo "SYNTAX ERRORS:$failed"; false; }
 node tests/build-test-scripts.mjs "$TEMP/gc-out"
 ```
 ```powershell
 $r = Invoke-Pester ./tests -PassThru -Output None; "$($r.PassedCount) passed, $($r.FailedCount) failed"
-Invoke-ScriptAnalyzer -Path ./Start-GuiCreator.ps1 -Severity Error      # must be empty
+foreach ($p in './Start-GuiCreator.ps1', './snippets') { Invoke-ScriptAnalyzer -Path $p -Recurse -Severity Error }   # must be empty (same as CI)
 ```
 
 - If `js/codegen.js`, `js/controls.js` or the Exchange example changed, run `node tests/tools/export-example.mjs` and include `examples/ExchangeOnlineAccessControl.ps1`.
@@ -34,22 +34,40 @@ Invoke-ScriptAnalyzer -Path ./Start-GuiCreator.ps1 -Severity Error      # must b
 
 ## 4. Push and watch
 
+Every push to `main` starts two workflows: `ci.yml` and `pages.yml`. Watch the runs **for the pushed commit**. Right after `git push`, GitHub may not have registered them yet, and `--limit 1` without `--commit` returns the previous commit's run, which has already succeeded.
+
 ```bash
 git push
-RID=$(gh run list --repo Mynster9361/guiCreatorPowerShell --workflow ci.yml --limit 1 --json databaseId --jq '.[0].databaseId')
-gh run watch $RID --repo Mynster9361/guiCreatorPowerShell --exit-status --interval 10
-gh run list --repo Mynster9361/guiCreatorPowerShell --workflow pages.yml --limit 1
+R=Mynster9361/guiCreatorPowerShell
+SHA=$(git rev-parse HEAD)
+run_id() {   # the run of workflow $1 for $SHA; waits up to 2 minutes for it to appear
+  for i in $(seq 24); do
+    id=$(gh run list --repo $R --workflow "$1" --commit "$SHA" --limit 1 --json databaseId --jq '.[0].databaseId')
+    [ -n "$id" ] && { echo "$id"; return 0; }
+    sleep 5
+  done
+  echo "no $1 run found for $SHA" >&2; return 1
+}
+CI=$(run_id ci.yml) && gh run watch "$CI" --repo $R --exit-status --interval 10; echo "CI exit: $?"
+PAGES=$(run_id pages.yml) && gh run watch "$PAGES" --repo $R --exit-status --interval 10; echo "Pages exit: $?"
 ```
 
-If CI fails, read the log (`gh run view <id> --log-failed`), fix the problem, and make a new commit. Never force-push `main`.
+Both must end with exit 0. If one fails, read the log (`gh run view <id> --repo $R --log-failed`), fix the problem, and make a new commit. Never force-push `main`.
 
 ## 5. Confirm the live site
 
-Pages takes 1–2 minutes after the deploy job. Check that a string unique to the change is served:
+Even after the deploy job succeeds, the CDN can serve the old files for a minute or two. Fetch **a file the change touched** (for example `css/app.css`, `index.html` or `js/codegen.js`) and look for a string that only exists after the change. Retry for a bounded time:
 
 ```bash
-curl -s "https://guicreator.mynster-it.dk/js/app.js?nocache=$RANDOM" | grep -c "<unique string>"
+FILE=js/app.js; NEEDLE='<string unique to the change>'
+for i in $(seq 18); do
+  curl -s "https://guicreator.mynster-it.dk/$FILE?nocache=$RANDOM" | grep -qF -- "$NEEDLE" && { echo "live (attempt $i)"; break; }
+  [ "$i" = 18 ] && echo "NOT LIVE after 3 minutes"
+  sleep 10
+done
 ```
+
+If a change only removes text, look for text that the change added nearby, or check that the removed string is gone.
 
 ## 6. Tell the user
 

@@ -55,12 +55,14 @@ A browser-based PowerShell GUI designer (in the style of SAPIEN PowerShell Studi
 
 ## Commands
 
-```powershell
-for f in js/*.js tests/*.mjs; do node --check "$f"; done      # bash: syntax
-node tests/build-test-scripts.mjs $env:TEMP/gc-out              # generator consistency checks
-Invoke-Pester ./tests -Output Detailed                          # 117+ tests (Pester 5+); needs node
-Invoke-ScriptAnalyzer -Path ./Start-GuiCreator.ps1 -Severity Error
+```bash
+failed=; for f in js/*.js tests/*.mjs tests/tools/*.mjs; do node --check "$f" || failed="$failed $f"; done; [ -z "$failed" ] || { echo "SYNTAX ERRORS:$failed"; false; }   # same files as CI
+node tests/build-test-scripts.mjs "$TEMP/gc-out"                # generator consistency checks
 node tests/tools/export-example.mjs                             # after codegen/example changes
+```
+```powershell
+Invoke-Pester ./tests -Output Detailed                          # 117+ tests (Pester 5+); needs node
+foreach ($p in './Start-GuiCreator.ps1', './snippets') { Invoke-ScriptAnalyzer -Path $p -Recurse -Severity Error }   # same as CI
 pwsh -File ./Start-GuiCreator.ps1                               # run the app locally (F5 runs designs)
 ```
 

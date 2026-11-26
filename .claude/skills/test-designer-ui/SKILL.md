@@ -5,11 +5,13 @@ description: Test the GUI Creator web designer itself in headless Microsoft Edge
 
 # Test the designer in a real browser
 
-`tests/tools/cdp.mjs` starts a headless Edge with its own profile, opens the page, suppresses the tour's first-visit offer, and gives you `ev`, mouse, keyboard and screenshot helpers. Write a small `.mjs` script in the scratchpad (not in the repo) and run it with `node`.
+`tests/tools/cdp.mjs` starts a headless Edge with its own profile, opens the page, suppresses the tour's first-visit offer, and gives you `ev`, mouse, keyboard and screenshot helpers. Write a small `.mjs` script in the scratchpad (not in the repo) and run it from the repo root with `node <script>`. The script is outside the repo, so it builds the paths from the current directory:
 
 ```js
-import { openDesigner } from 'file:///C:/Users/Morte/Desktop/github/guiCreator/tests/tools/cdp.mjs';
-const b = await openDesigner({ url: 'file:///C:/Users/Morte/Desktop/github/guiCreator/index.html' });
+import { pathToFileURL } from 'node:url';
+const repo = pathToFileURL(process.cwd() + '/').href;          // run from the repo root
+const { openDesigner } = await import(repo + 'tests/tools/cdp.mjs');
+const b = await openDesigner({ url: repo + 'index.html' });
 const [x, y] = await b.center('.tb-item');            // CSS selector -> centre point
 await b.doubleClick(x, y);                            // add the first toolbox control
 await b.key('z', 'KeyZ', 90, 2);                      // Ctrl+Z  (modifiers: 1 Alt, 2 Ctrl, 8 Shift)

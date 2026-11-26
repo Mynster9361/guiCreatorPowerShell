@@ -20,23 +20,33 @@ node tests/build-test-scripts.mjs "$env:TEMP\gc-out"          # or export a desi
 
 ## Drive the window like a user
 
-Start the script with `-KeepOpen` in the background, then drive it from **Windows PowerShell 5.1**, which has the UI Automation assemblies:
+Start the script with `-KeepOpen` as a separate process, then drive it from **Windows PowerShell 5.1**, which has the UI Automation assemblies. With `-KeepOpen` nothing closes the window except the driver, so the driver closes it in `finally`. If the run is still alive after that, kill its whole process tree. That tree is the test `pwsh`, the generated script's `pwsh` and the GliderUI server it started. Killing by this PID never touches the developer's own GliderUI windows.
 
 ```powershell
-$job = Start-Job { param($p) & "$using:PWD\tests\tools\Test-GeneratedScript.ps1" -Path $p -KeepOpen } -ArgumentList $script
+$out = Join-Path $env:TEMP "gc-ui-$PID.log"
+$run = Start-Process pwsh -PassThru -RedirectStandardOutput $out -ArgumentList '-NoProfile', '-File',
+    "$PWD\tests\tools\Test-GeneratedScript.ps1", '-Path', $script, '-KeepOpen'
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command @'
 Import-Module ./tests/tools/UIAutomation.psm1
-$w = Get-UIWindow 'Window Title'
-Set-UIText $w 0 'shared@contoso.com'          # Nth TextBox
-Switch-UIToggle $w 'Full Access'              # CheckBox / ToggleSwitch by its text
-Select-UIComboItem $w 0 'Editor'
-Invoke-UIButton $w 'Give Access'
-$d = Get-UIWindow 'Please confirm'; Invoke-UIButton $d 'Continue'   # dialogs are separate windows
-Get-UILabels $w; Get-UIText $w 2
-Close-UIWindow $w
+$w = $null
+try {
+    $w = Get-UIWindow 'Window Title'
+    Set-UIText $w 0 'shared@contoso.com'          # Nth TextBox
+    Switch-UIToggle $w 'Full Access'              # CheckBox / ToggleSwitch by its text
+    Select-UIComboItem $w 0 'Editor'
+    Invoke-UIButton $w 'Give Access'
+    $d = Get-UIWindow 'Please confirm'; Invoke-UIButton $d 'Continue'   # dialogs are separate windows
+    Get-UILabels $w; Get-UIText $w 2
+} finally {
+    if ($w) { Close-UIWindow $w }
+}
 '@
-$job | Wait-Job -Timeout 60 | Receive-Job
+if (-not $run.WaitForExit(30000)) { $run.Kill($true); 'TIMEOUT: killed the test process tree' }
+Get-Content $out; Remove-Item $out
 ```
+
+- If the run had to be killed, `Test-GeneratedScript`'s `finally` did not run, so its copy `%TEMP%\gc-test-<id>.ps1` is left behind. Remove `gc-test-*.ps1` files that no running process uses.
+- If the startup window never appeared (`Get-UIWindow` threw), `$w` is `$null`, so the kill above is what ends the run.
 
 ## Rules learned the hard way
 
