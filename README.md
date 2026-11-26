@@ -129,6 +129,18 @@ The **Examples** menu opens eight of [GliderUI's examples](https://github.com/md
 
 The original scripts build their windows in code. In these versions the layout is in the designer and the logic is in the Script tab. They are ported under GliderUI's MIT license (Copyright (c) 2026 mdgrs-mei).
 
+### Project Dashboard (Fluent2 design)
+
+**Examples, then Project Dashboard (Fluent2)** shows how to build a Windows 11 style app from the toolbox alone. It has a navigation list with icons, stat cards, tabs, a task table with filters, and an edit panel. The look comes from a few design rules:
+
+- **Cards:** a Panel with Background `#FFFFFF`, BorderBrush `#E0E0E0`, BorderThickness `1` and CornerRadius `8`. Badges and avatars are small Panels with a large CornerRadius.
+- **Type sizes:** 12 for grey captions, 14 for body text, 16 SemiBold for card titles, 28 SemiBold for titles and numbers.
+- **Spacing:** steps of 4. Use 16 inside cards and 12–16 between them.
+- **Icons:** characters from the Segoe Fluent Icons font (Windows 11). FontFamily `Segoe UI, Segoe Fluent Icons` lets one text mix an icon and words.
+- **Translucent colours:** use 8-digit colours with alpha first, as Avalonia expects (`#CC0078D4` is 80% opaque).
+
+Everything in it uses only what GliderUI 0.6 supports, checked in real windows.
+
 ### Exchange Online Access Control (complete tool)
 
 **Examples, then Exchange Online Access Control** is a complete, real-world tool. It's a rebuild of the WinForms script [Set calendar and mailbox permissions](https://github.com/Mynster9361/PowerShell/tree/main/GUI/Set%20calendar%20and%20mailbox%20permissions). It checks, gives and removes **Full Access** (with optional auto-mapping), **Send As**, **Send On Behalf** and **calendar** permissions on Exchange Online mailboxes.

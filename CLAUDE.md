@@ -76,6 +76,12 @@ CI only parses scripts. Real behaviour needs Windows with GliderUI: see the `ver
 
 - 0.6.0 switched the server to Avalonia 12.2's **Fluent2** theme (`<Fluent2Theme />`); the DataGrid still uses the old Fluent styles (black header in Dark). The `.v-*` preview was compared with real 0.6.0 windows in Dark and Light.
 - Avalonia defaults that differ from what the designer draws are written with `forceEmit`: Button content alignment (Avalonia: Left/Top) and TimePicker `ClockIdentifier` (Avalonia: 24-hour when the culture's time pattern has `H`). DatePicker column order and the CalendarDatePicker watermark follow the culture; the preview uses the browser's locale.
+- **Generate only what GliderUI supports.** GUI Creator must not extend GliderUI: no Add-Type, custom C# or helper layers in generated scripts. Prove each new XAML feature with `[AvaloniaRuntimeXamlLoader]::Parse` and a screenshot of a real window first.
+  - Checked in 0.6.0 (parsed and rendered): `#AARRGGBB` colours, Segoe Fluent Icons through `FontFamily` (also as a fallback list, e.g. `Segoe UI, Segoe Fluent Icons`), `PathIcon`, `Path`, `Image` (file path or `file:///` URI), `LinearGradientBrush` as element syntax, `Border.BackdropEffect` with `BlurEffect`, `BoxShadow`, `StackPanel Spacing`, `FlexPanel`.
+  - Not supported: brush strings like `linear-gradient(...)` ("Invalid brush string"). Window `TransparencyLevelHint` parses, but its rendering is not checked yet.
+- **A `[DataSource]` is enumerable:** a function that returns one must use `, [DataSource]@{...}` (unary comma). Without it, PowerShell sends its key/value pairs down the pipeline, and `.Add()` fails with "Cannot find an overload".
+- Values set while the script starts raise events before the `Add<Event>` wiring exists, so those handlers don't run for them. Set dependent values (labels and so on) directly as well.
+- With `ExtendClientAreaToDecorationsHint`, Avalonia still draws the window Title (no icon) at the top left. Don't put your own title label there.
 - If the **same GliderUI server version is installed twice** (two module folders), GliderUI 0.6.0 joins both paths and the window can't start. Never add a temp copy of a version that is already installed.
 
 - The generated pattern is `[AvaloniaRuntimeXamlLoader]::Parse($xaml, $null)`, then `$win.FindControl('name')`, then `$ctl.Add<Event>($handler)`. Handlers are script blocks or `[EventCallback]@{...}` with `param ($argumentList, $s, $e)`.

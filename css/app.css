@@ -123,7 +123,8 @@ code { font-family: var(--mono); font-size: 12px; background: var(--bg3); paddin
 .fw.form-sel { box-shadow: 0 12px 40px rgba(0, 0, 0, .55), 0 0 0 2px #3b8eea; }
 
 .fw.extend .fw-title { position: absolute; left: 0; right: 0; top: 0; z-index: 6; background: transparent; pointer-events: none; }
-.fw.extend .fw-title .t, .fw.extend .fw-title .ico { visibility: hidden; }
+/* with ExtendClientAreaToDecorationsHint, Avalonia still draws the Title (no icon) at the top left */
+.fw.extend .fw-title .ico { display: none; }
 .fw.extend .fw-client { border-radius: 8px; }
 .menu-strip { display: flex; flex: none; height: 32px; align-items: stretch; padding: 0 4px; position: relative; z-index: 5; background: transparent; }
 .menu-strip .mi { position: relative; padding: 0 10px; display: flex; align-items: center; border-radius: 4px; margin: 2px 0; }
@@ -171,7 +172,7 @@ code { font-family: var(--mono); font-size: 12px; background: var(--bg3); paddin
 .chev { width: 8px; height: 8px; border-right: 1.5px solid var(--fg); border-bottom: 1.5px solid var(--fg); transform: rotate(45deg) translate(-2px, -2px); flex: none; opacity: .8; }
 /* ListBox: 40px items, the selected one inset 4px with a small accent pill */
 .v-lb { background: var(--ubg, transparent); overflow: hidden; }
-.v-lb .it { position: relative; height: 40px; line-height: 40px; margin: 0 4px; padding: 0 12px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.v-lb .it { position: relative; height: 40px; line-height: 40px; margin: 0 4px; padding: 0 12px; border-radius: 4px; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 .v-lb .it.sel { background: var(--sel); }
 .v-lb .it.sel::before { content: ''; position: absolute; left: 0; top: 12px; width: 3px; height: 16px; border-radius: 2px; background: var(--acc); }
 /* Slider: the track sits in a fixed 14px + 22px (thumb) + 14px grid, so its center is 25px from the top/left */

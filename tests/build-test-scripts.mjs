@@ -168,6 +168,7 @@ for (const [label, n, want] of [
     } finally {
       GC.upgradeLayout = noUpgrade;
     }
+    if (raw.layout >= 2) continue; // written with the Fluent2 sizes: nothing to upgrade
     const json = JSON.stringify(raw);
     compare(`example ${e.name}`, () => JSON.parse(json));
   }

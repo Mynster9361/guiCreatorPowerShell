@@ -465,6 +465,255 @@ $button_Click = [EventCallback]@{
 `)
     ),
 
+    // ------------------------------------------------------------------ GUI Creator showcase: Fluent2 dashboard
+    // Built only from toolbox controls and GliderUI 0.6 features checked in real windows: Border cards
+    // with CornerRadius, Segoe Fluent Icons through FontFamily fallback ("Segoe UI, Segoe Fluent Icons"),
+    // [DataSource] rows that update the DataGrid, CalendarDatePicker.SelectedDate.
+    ex('Project Dashboard (Fluent2)', 'ProjectDashboard', 'Fluent2 design', 'A Windows 11 style dashboard: navigation list with icons, stat cards, tabs, a task table with filters and an edit panel. Shows how to build Fluent2 layouts from cards, type sizes and spacing.', () => {
+      const ICONS = 'Segoe UI, Segoe Fluent Icons';
+      const grey = '#616161';
+      const none = { BorderBrush: '', BorderThickness: '' };
+      const card = (name, x, y, w, h, children, extra) =>
+        ctl('Border', name, x, y, w, h, Object.assign({ Background: '#FFFFFF', BorderBrush: '#E0E0E0', BorderThickness: '1', CornerRadius: '8' }, extra || {}), { children });
+      const text = (name, x, y, w, h, value, extra) => ctl('TextBlock', name, x, y, w, h, Object.assign({ Text: value }, extra || {}));
+      const caption = (name, x, y, w, value, extra) => text(name, x, y, w, 18, value, Object.assign({ FontSize: 12, Foreground: grey }, extra || {}));
+      const avatar = (name, x, y, size, letter, color, extra) =>
+        ctl('Border', name, x, y, size, size, Object.assign({}, none, { Background: color, CornerRadius: String(size / 2) }, extra || {}), {
+          children: [text(name + 'Letter', 0, Math.round(size / 2 - 9), size, 18, letter, Object.assign({ TextAlignment: 'Center', Foreground: '#FFFFFF', FontWeight: 'SemiBold', FontSize: size > 26 ? 13 : 10 }, letter.charCodeAt(0) >= 0xe000 ? { FontFamily: ICONS, FontWeight: 'Normal', FontSize: 12 } : {}))],
+        });
+      const stat = (name, x, title, value, sub, subColor) =>
+        card(name, x, 16, 156, 100, [
+          caption(name + 'Caption', 16, 14, 130, title),
+          text(name + 'Value', 16, 32, 110, 36, value, { FontSize: 28, FontWeight: 'SemiBold' }),
+          caption(name + 'Sub', 16, 70, 136, sub, { Foreground: subColor || grey }),
+        ]);
+      const pinned = ['#0F6CBD|Website Redesign', '#C239B3|Mobile App 2.0', '#107C10|Brand Guidelines', '#F7630C|Q1 Campaign'];
+
+      const tasksTab = [
+        stat('cardOpen', 0, 'Open tasks', '0', ''),
+        stat('cardDone', 168, 'Completed', '0', '+12 since last sprint', '#0E700E'),
+        stat('cardOverdue', 336, 'Overdue', '0', '', '#C50F1F'),
+        stat('cardHours', 504, 'Hours logged', '0h', 'of 420h budget'),
+        ctl('TextBox', 'textFilter', 0, 132, 240, 32, { Watermark: 'Filter tasks', FontFamily: ICONS }, { events: { TextChanged: 'filter_Changed' } }),
+        ctl('CheckBox', 'checkShowCompleted', 256, 132, 176, 32, { Content: 'Show completed', IsChecked: true }, { events: { IsCheckedChanged: 'filter_Changed' } }),
+        ctl('ComboBox', 'comboAssignee', 520, 132, 138, 32, { Items: 'All assignees\nMax\nSteven\nNikita\nJumar\nJulien', SelectedIndex: 0 }, { events: { SelectionChanged: 'filter_Changed' } }),
+        ctl('DataGrid', 'gridTasks', 0, 176, 658, 409, {
+          Columns: 'Task | Task\nAssignee | Assignee\nStatus | Status\nDue | Due\nProgress | Progress | {0:P0}',
+          IsReadOnly: true, SelectionMode: 'Single', CanUserResizeColumns: true, Anchor: 'Top, Bottom, Left, Right',
+        }, { events: { SelectionChanged: 'gridTasks_SelectionChanged' } }),
+        card('cardSprint', 674, 16, 300, 100, [
+          text('labelSprint', 16, 12, 150, 24, 'Sprint 14', { FontSize: 16, FontWeight: 'SemiBold' }),
+          caption('labelSprintLeft', 186, 16, 96, '12 days left', { TextAlignment: 'Right' }),
+          ctl('ProgressBar', 'progressSprint', 16, 44, 266, 16, { Value: 0 }),
+          caption('labelSprintCount', 16, 68, 200, ''),
+          text('labelSprintPercent', 222, 66, 60, 20, '0%', { TextAlignment: 'Right', FontWeight: 'SemiBold' }),
+        ], { Anchor: 'Top, Right' }),
+        ctl('GroupBox', 'groupDetails', 674, 132, 300, 453, { Header: 'Task details', Anchor: 'Top, Right' }, {
+          children: [
+            ctl('TextBox', 'textTaskName', 0, 0, 274, 32, { Watermark: 'Task name' }),
+            ctl('ComboBox', 'comboStatus', 0, 44, 130, 32, { Items: 'Backlog\nIn progress\nIn review\nDone' }),
+            ctl('CalendarDatePicker', 'dateDue', 142, 44, 132, 32, {}),
+            caption('labelPriority', 0, 92, 100, 'Priority'),
+            ctl('RadioButton', 'radioLow', 0, 112, 70, 32, { Content: 'Low', GroupName: 'priority' }),
+            ctl('RadioButton', 'radioMedium', 76, 112, 96, 32, { Content: 'Medium', GroupName: 'priority' }),
+            ctl('RadioButton', 'radioHigh', 176, 112, 80, 32, { Content: 'High', GroupName: 'priority' }),
+            caption('labelEstimate', 0, 156, 100, 'Estimate'),
+            caption('labelEstimateValue', 194, 156, 80, '0 h', { TextAlignment: 'Right', Foreground: '#0F6CBD' }),
+            ctl('Slider', 'sliderEstimate', 0, 172, 274, 32, { Minimum: 0, Maximum: 40, Value: 0, SmallChange: 1, LargeChange: 4, TickFrequency: 1, IsSnapToTickEnabled: true }, { events: { ValueChanged: 'sliderEstimate_ValueChanged' } }),
+            caption('labelNotify', 0, 220, 120, 'Notify watchers'),
+            ctl('ToggleSwitch', 'toggleNotify', 0, 240, 140, 32, { IsChecked: true }),
+            ctl('Button', 'buttonCancel', 98, 355, 80, 32, { Content: 'Cancel' }, { events: { Click: 'buttonCancel_Click' } }),
+            ctl('Button', 'buttonSave', 186, 355, 88, 32, { Content: 'Save', Classes: 'accent' }, { events: { Click: 'buttonSave_Click' } }),
+          ],
+        }),
+      ];
+      const placeholder = (tab) => [text('label' + tab, 0, 16, 400, 24, tab + ' is not part of this example.', { Foreground: grey })];
+      const tabs = ctl('TabControl', 'tabsProject', 24, 96, 974, 626, { Tabs: 'Overview\nTasks\nTimeline\nFiles\nActivity', SelectedIndex: 1, Anchor: 'Top, Bottom, Left, Right' }, {
+        slots: [placeholder('Overview'), tasksTab, placeholder('Timeline'), placeholder('Files'), placeholder('Activity')],
+      });
+      tabs.activeSlot = 1;
+
+      const p = project('formDashboard', { Title: 'Project Management', Width: 1280, Height: 780, MinWidth: 1180, MinHeight: 720, RequestedThemeVariant: 'Light', ExtendClientAreaToDecorationsHint: true }, [
+        // title bar: with ExtendClientAreaToDecorationsHint Avalonia draws the Title (top left) and the caption buttons
+        ctl('TextBox', 'textSearch', 440, 4, 400, 32, { Watermark: 'Search projects and tasks', Anchor: 'Top' }),
+        // navigation pane
+        ctl('ListBox', 'listNav', 8, 48, 240, 248, { Items: '   Home\n   Projects\n   My tasks\n   Calendar\n   Team\n   Reports', SelectedIndex: 1, FontFamily: ICONS }),
+        caption('labelPinned', 20, 312, 200, 'Pinned projects'),
+        ...pinned.flatMap((s, i) => {
+          const [color, label] = s.split('|');
+          return [
+            ctl('Border', 'dotPinned' + (i + 1), 24, 346 + i * 36, 8, 8, Object.assign({}, none, { Background: color, CornerRadius: '4' })),
+            text('labelPinned' + (i + 1), 44, 340 + i * 36, 190, 20, label),
+          ];
+        }),
+        avatar('avatarUser', 16, 728, 32, 'J', '#0F6CBD', { Anchor: 'Bottom, Left' }),
+        text('labelUser', 58, 724, 140, 20, 'Julien', { FontWeight: 'SemiBold', Anchor: 'Bottom, Left' }),
+        caption('labelUserRole', 58, 742, 140, 'Software Developer', { Anchor: 'Bottom, Left' }),
+        ctl('Button', 'buttonSettings', 204, 728, 36, 32, { Content: '', FontFamily: ICONS, Anchor: 'Bottom, Left' }),
+        // content
+        ctl('Border', 'panelContent', 256, 40, 1024, 740, { Background: '#FBFBFB', BorderBrush: '#E5E5E5', BorderThickness: '1', CornerRadius: '8,0,0,0', Anchor: 'Top, Bottom, Left, Right' }, {
+          children: [
+            caption('labelBreadcrumb', 32, 24, 300, 'Projects  /  Marketing'),
+            text('labelTitle', 32, 42, 250, 40, 'Website Redesign', { FontSize: 28, FontWeight: 'SemiBold' }),
+            ctl('Border', 'badgeStatus', 290, 54, 72, 22, Object.assign({}, none, { Background: '#DFF6DD', CornerRadius: '11' }), {
+              children: [text('labelBadge', 0, 2, 72, 18, 'On track', { FontSize: 12, Foreground: '#0E700E', TextAlignment: 'Center' })],
+            }),
+            avatar('avatarMax', 500, 52, 26, 'M', '#107C10', { BorderBrush: '#FBFBFB', BorderThickness: '2', Anchor: 'Top, Right' }),
+            avatar('avatarSteven', 520, 52, 26, 'S', '#CA5010', { BorderBrush: '#FBFBFB', BorderThickness: '2', Anchor: 'Top, Right' }),
+            avatar('avatarNikita', 540, 52, 26, 'N', '#C239B3', { BorderBrush: '#FBFBFB', BorderThickness: '2', Anchor: 'Top, Right' }),
+            avatar('avatarJumar', 560, 52, 26, 'J', '#5C2E91', { BorderBrush: '#FBFBFB', BorderThickness: '2', Anchor: 'Top, Right' }),
+            ctl('Button', 'buttonBell', 610, 49, 40, 32, { Content: '', FontFamily: ICONS, Anchor: 'Top, Right' }),
+            ctl('Button', 'buttonExport', 658, 49, 104, 32, { Content: '  Export', FontFamily: ICONS, Anchor: 'Top, Right' }, { events: { Click: 'buttonExport_Click' } }),
+            ctl('Button', 'buttonShare', 770, 49, 92, 32, { Content: '  Share', FontFamily: ICONS, Anchor: 'Top, Right' }),
+            ctl('Button', 'buttonNewTask', 870, 49, 120, 32, { Content: '  New task', FontFamily: ICONS, Classes: 'accent', Anchor: 'Top, Right' }, { events: { Click: 'buttonNewTask_Click' } }),
+            tabs,
+          ],
+        }),
+      ], String.raw`
+# Fluent2 dashboard: the look comes from the design, not from code.
+# - Cards are Panels (Border) with Background #FFFFFF, BorderBrush #E0E0E0, BorderThickness 1, CornerRadius 8.
+# - Type sizes: 12 captions (grey), 14 body, 16 SemiBold card titles, 28 SemiBold titles and numbers.
+# - Spacing in steps of 4: 16 inside cards, 12-16 between them.
+# - Icons are Segoe Fluent Icons characters; FontFamily "Segoe UI, Segoe Fluent Icons" mixes them with text.
+# Tasks are [DataSource] objects, so changing a property updates the DataGrid row.
+
+$statuses = @('Backlog', 'In progress', 'In review', 'Done')
+$en = [cultureinfo]'en-US'
+$today = (Get-Date).Date
+$allTasks = [System.Collections.Generic.List[DataSource]]::new()
+$taskRows = [GliderUI.System.Collections.ObjectModel.ObservableCollection[DataSource]]::new()
+
+function New-Task ([string]$Name, [string]$Assignee, [string]$Status, [int]$DueInDays, [double]$Progress, [string]$Priority, [int]$Estimate) {
+    $due = $today.AddDays($DueInDays)
+    # The leading comma returns the DataSource as one object: it is enumerable, so PowerShell would
+    # otherwise send its properties down the pipeline one by one.
+    , [DataSource]@{
+        Task = $Name; Assignee = $Assignee; Status = $Status; Progress = $Progress
+        Due = $due.ToString('MMM d', $en); DueTicks = $due.Ticks; Priority = $Priority; Estimate = $Estimate
+    }
+}
+@(
+    New-Task 'Finalize hero illustrations' 'Max' 'In review' -2 0.9 'High' 12
+    New-Task 'Responsive navigation menu' 'Steven' 'In progress' 1 0.55 'High' 16
+    New-Task 'Write copy for the pricing page' 'Nikita' 'In progress' 3 0.3 'Medium' 6
+    New-Task 'Set up analytics events' 'Jumar' 'Backlog' 10 0 'Low' 8
+    New-Task 'Accessibility audit' 'Julien' 'In review' -1 0.8 'High' 10
+    New-Task 'Migrate blog to new CMS' 'Steven' 'Done' -6 1 'Medium' 20
+    New-Task 'Optimize image loading' 'Jumar' 'In progress' 4 0.35 'Medium' 8
+    New-Task 'Customer testimonials carousel' 'Max' 'Backlog' 12 0.05 'Low' 6
+    New-Task 'Newsletter signup form' 'Nikita' 'Done' -8 1 'Low' 4
+    New-Task 'Cross-browser QA pass' 'Julien' 'Backlog' 14 0 'Medium' 12
+) | ForEach-Object { $allTasks.Add($_) }
+$gridTasks.ItemsSource = $taskRows
+
+function Update-TaskList {
+    $filter = $textFilter.Text
+    $who = $comboAssignee.SelectedItem.Content
+    $showDone = $checkShowCompleted.IsChecked -eq $true
+    $taskRows.Clear()
+    foreach ($t in $allTasks) {
+        if (-not $showDone -and $t.Status -eq 'Done') { continue }
+        if ($who -and $who -ne 'All assignees' -and $t.Assignee -ne $who) { continue }
+        if ($filter -and $t.Task -notlike "*$filter*") { continue }
+        $taskRows.Add($t)
+    }
+}
+
+function Update-Stats {
+    $open = @($allTasks | Where-Object Status -NE 'Done')
+    $done = @($allTasks | Where-Object Status -EQ 'Done')
+    $overdue = @($open | Where-Object { [datetime]::new($_.DueTicks) -lt $today })
+    $dueSoon = @($open | Where-Object { [datetime]::new($_.DueTicks) -lt $today.AddDays(7) })
+    $hours = ($allTasks | ForEach-Object { $_.Estimate * $_.Progress } | Measure-Object -Sum).Sum
+    $cardOpenValue.Text = "$($open.Count)"
+    $cardOpenSub.Text = "$($dueSoon.Count) due this week"
+    $cardDoneValue.Text = "$($done.Count)"
+    $cardOverdueValue.Text = "$($overdue.Count)"
+    $cardOverdueSub.Text = "$(@($overdue | Where-Object Priority -EQ 'High').Count) high priority"
+    $cardHoursValue.Text = '{0:N0}h' -f $hours
+    $percent = if ($allTasks.Count) { $done.Count / $allTasks.Count } else { 0 }
+    $progressSprint.Value = $percent * 100
+    $labelSprintCount.Text = "$($done.Count) of $($allTasks.Count) tasks completed"
+    $labelSprintPercent.Text = '{0:P0}' -f $percent
+}
+
+function Show-TaskDetails {
+    $t = $gridTasks.SelectedItem
+    $groupDetails.IsEnabled = [bool]$t
+    if (-not $t) { return }
+    $textTaskName.Text = $t.Task
+    $comboStatus.SelectedIndex = [array]::IndexOf($statuses, $t.Status)
+    $dateDue.SelectedDate = [GliderUI.System.DateTime]::new($t.DueTicks)
+    $radioLow.IsChecked = $t.Priority -eq 'Low'
+    $radioMedium.IsChecked = $t.Priority -eq 'Medium'
+    $radioHigh.IsChecked = $t.Priority -eq 'High'
+    $sliderEstimate.Value = $t.Estimate
+    # Set here as well: events raised while the script starts arrive before the handlers are wired.
+    $labelEstimateValue.Text = "$($t.Estimate) h"
+}
+
+$filter_Changed = {
+    param ($argumentList, $s, $e)
+    Update-TaskList
+}
+
+$gridTasks_SelectionChanged = {
+    param ($argumentList, $s, $e)
+    Show-TaskDetails
+}
+
+$sliderEstimate_ValueChanged = {
+    param ($argumentList, $s, $e)
+    $labelEstimateValue.Text = "$([int]$sliderEstimate.Value) h"
+}
+
+$buttonCancel_Click = {
+    param ($argumentList, $s, $e)
+    Show-TaskDetails
+}
+
+$buttonSave_Click = {
+    param ($argumentList, $s, $e)
+    $t = $gridTasks.SelectedItem
+    if (-not $t) { return }
+    $t.Task = $textTaskName.Text
+    if ($comboStatus.SelectedIndex -ge 0) { $t.Status = $statuses[$comboStatus.SelectedIndex] }
+    if ($t.Status -eq 'Done') { $t.Progress = 1 }
+    $d = $dateDue.SelectedDate
+    if ($d) {
+        $due = [datetime]::new($d.Ticks)
+        $t.DueTicks = $due.Ticks
+        $t.Due = $due.ToString('MMM d', $en)
+    }
+    $t.Priority = if ($radioHigh.IsChecked) { 'High' } elseif ($radioMedium.IsChecked) { 'Medium' } else { 'Low' }
+    $t.Estimate = [int]$sliderEstimate.Value
+    Update-Stats
+}
+
+$buttonNewTask_Click = {
+    param ($argumentList, $s, $e)
+    $t = New-Task 'New task' 'Julien' 'Backlog' 7 0 'Medium' 4
+    $allTasks.Add($t)
+    Update-TaskList
+    Update-Stats
+    $gridTasks.SelectedIndex = $taskRows.IndexOf($t)
+}
+
+$buttonExport_Click = {
+    param ($argumentList, $s, $e)
+    $allTasks | Select-Object Task, Assignee, Status, Due, Priority, Estimate | ConvertTo-Csv -NoTypeInformation | Set-Clipboard
+    Write-Host "Copied $($allTasks.Count) tasks to the clipboard as CSV."
+}
+
+Update-TaskList
+Update-Stats
+$gridTasks.SelectedIndex = 0
+Show-TaskDetails
+`);
+      p.layout = 2; // laid out with the Fluent2 container sizes
+      return p;
+    }),
+
     // ------------------------------------------------------------------ GUI Creator showcase: pages + dialog
     {
       name: 'Setup Wizard (pages + dialog)',
