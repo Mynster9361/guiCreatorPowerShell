@@ -42,6 +42,14 @@ jobs:
           # GitHub Pages with a custom domain: keep the CNAME next to index.html as well
           echo "guicreator.mynster-it.dk" > _site/CNAME
           touch _site/.nojekyll
+          # GitHub Pages lets browsers keep files for 10 minutes (max-age=600). Versioned script and
+          # stylesheet URLs make each deploy load as one set, instead of a new index.html with old scripts.
+          v="${GITHUB_SHA::8}"
+          want=$(grep -cE "(src|href)=\"(js|css)/" index.html)
+          sed -i -E "s#(src|href)=\"((js|css)/[^\"?]+)\"#\1=\"\2?v=$v\"#g" _site/index.html
+          n=$(grep -c "?v=$v\"" _site/index.html)
+          echo "versioned $n of $want asset URLs with ?v=$v"
+          [ "$n" -gt 0 ] && [ "$n" -eq "$want" ] || { echo "not every js/css URL in index.html was versioned"; exit 1; }
           find _site -type f | sort
 
       - uses: actions/configure-pages@v6
