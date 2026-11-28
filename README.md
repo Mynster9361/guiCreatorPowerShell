@@ -4,6 +4,10 @@ A browser-based PowerShell GUI designer modeled on the SAPIEN PowerShell Studio 
 
 **Try it online: [guicreator.mynster-it.dk](https://guicreator.mynster-it.dk)**. No install is needed to design and export. To run designs with F5, use the local launcher described below.
 
+[![Watch the GUI Creator demo (1:53)](docs/GUI-Creator-demo.jpg)](docs/GUI-Creator-demo.mp4)
+
+*The demo (1:53, music, no narration):* design a form on the live site, clone this repo, start the local launcher, and run the Project Dashboard example as a real GliderUI window.
+
 > **New to GliderUI?** Watch the PowerShell Wednesday session [Building Cross-Platform GUIs with PowerShell and GliderUI](https://www.youtube.com/watch?v=ZeLMIPD68ZU) (PDQ on YouTube).
 
 There is no build step and nothing to install. Run `pwsh -File .\Start-GuiCreator.ps1` to use it with F5 runs, or just open `index.html` in a browser (Edge, Chrome or Firefox).
@@ -265,6 +269,7 @@ The hosted page works like a locally opened `index.html`: you can design, use th
 | `js/snippets.js` | Code snippets for the Script tab |
 | `js/tour.js` | Interactive guided tour (steps, spotlight, practice project) |
 | `js/app.js` | Designer, property grid, menus, commands |
+| `docs/` | The demo video and its poster for this README (not part of the published site) |
 
 ## Notes
 

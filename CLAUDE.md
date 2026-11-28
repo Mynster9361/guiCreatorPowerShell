@@ -24,6 +24,7 @@ A browser-based PowerShell GUI designer (in the style of SAPIEN PowerShell Studi
 | `Start-GuiCreator.ps1` | Local launcher: serves the page on localhost and runs designs with pwsh (F5) |
 | `examples/ExchangeOnlineAccessControl.ps1` | Committed export of an example; regenerate it with `node tests/tools/export-example.mjs` |
 | `snippets/Show-MessageDialog.ps1` | Standalone snippet |
+| `docs/` | README demo video (`GUI-Creator-demo.mp4`, 17 MB) and its poster (`.jpg`). Not deployed: `pages.yml` copies an explicit folder list |
 | `tests/` | `build-test-scripts.mjs` (generator checks), `Generated.Tests.ps1` (Pester), `tools/` (runtime and browser test tools) |
 | `.github/workflows/` | `ci.yml` (checks), `pages.yml` (deploy) |
 
