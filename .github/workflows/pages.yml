@@ -38,7 +38,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site
-          cp -r index.html css js examples snippets Start-GuiCreator.ps1 README.md _site/
+          cp -r index.html css img js examples snippets Start-GuiCreator.ps1 README.md _site/
           # GitHub Pages with a custom domain: keep the CNAME next to index.html as well
           echo "guicreator.mynster-it.dk" > _site/CNAME
           touch _site/.nojekyll

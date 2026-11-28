@@ -12,6 +12,7 @@ A browser-based PowerShell GUI designer (in the style of SAPIEN PowerShell Studi
 | Path | What it is |
 | --- | --- |
 | `index.html`, `css/app.css` | Page layout and styles, including the Fluent look-alike preview of controls (`.v-*` classes) |
+| `img/` | GliderUI glider logo: `gliderui.svg` (white, for the dark header and About), `favicon.svg` (dark or white via `prefers-color-scheme`), `apple-touch-icon.png` (white on the header grey) |
 | `js/controls.js` | `GC.TYPES`: every control type (props, events, `valueProp`, render, `xamlChildren`), `FORM_PROPS`, toolbox |
 | `js/codegen.js` | XAML and PowerShell generation (`GC.genScript`, `GC.genXaml`), Anchor layout, reserved names, `GC.CREDITS`, embedded project |
 | `js/editor.js` | Code editor: highlighting, autocomplete popup, `insertBlock` |

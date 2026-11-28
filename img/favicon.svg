@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2.5 -20.5 232 232">
+  <!-- GliderUI glider: dark on light browser chrome, white on dark -->
+  <style>path { fill: #1b1c1f; } @media (prefers-color-scheme: dark) { path { fill: #ffffff; } }</style>
+  <path d="M113.2 14.4A8.7 8.7 0 0 1 125.8 3.1L222 69.7A6.9 6.9 0 0 1 221.2 81.6L12.7 188.5A7.4 7.4 0 0 1 4.8 176.2L141.9 67.7ZM152 154h49a9 9 0 0 1 0 18h-49a9 9 0 0 1 0-18Z"/>
+</svg>

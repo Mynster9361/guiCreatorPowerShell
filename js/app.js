@@ -1847,7 +1847,8 @@
     about() {
       modal(
         'About GUI Creator',
-        `<p>A PowerShell GUI designer in the spirit of SAPIEN PowerShell Studio's form designer, producing scripts for <a href="https://github.com/mdgrs-mei/GliderUI" target="_blank" rel="noopener">GliderUI</a> (Avalonia UI for PowerShell).</p>
+        `<div class="about-head"><img class="logo big" src="img/gliderui.svg" alt=""><b>GUI Creator</b></div>
+        <p>A PowerShell GUI designer in the spirit of SAPIEN PowerShell Studio's form designer, producing scripts for <a href="https://github.com/mdgrs-mei/GliderUI" target="_blank" rel="noopener">GliderUI</a> (Avalonia UI for PowerShell).</p>
         <p><b>Built on GliderUI by <a href="https://github.com/mdgrs-mei" target="_blank" rel="noopener">mdgrs-mei</a>.</b> GliderUI does all the real work: it runs Avalonia in its own process and makes every control, property and event available to PowerShell, so a script can build a native, cross-platform window. GUI Creator only writes the script; the examples in the Examples menu are mdgrs-mei's GliderUI examples, rebuilt as designs (MIT License).</p>
         <p>New to GliderUI? Watch the PowerShell Wednesday session <a href="${VIDEO_URL}" target="_blank" rel="noopener">Building Cross-Platform GUIs with PowerShell and GliderUI</a> (PDQ, YouTube).</p>
         <p><b>How the generated script works:</b> the designer writes XAML (controls in a <code>Grid</code> with margins and alignments, so Anchor can resize them), loads it with <code>[AvaloniaRuntimeXamlLoader]::Parse()</code>, gets every named control with <code>$window.FindControl('name')</code> and wires your handlers with <code>$control.Add&lt;Event&gt;($handler)</code>.</p>
